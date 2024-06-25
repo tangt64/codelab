@@ -1,0 +1,119 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-git
+  labels:
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kube-git-pv
+  namespace: kube-git
+  labels:
+    type: local
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 2Gi
+  hostPath:
+    path: /mnt/data/kube-git
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kube-git-pv-claim
+  namespace: kube-git
+  labels:
+    app: kube-git
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-git
+  namespace: kube-git
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-git
+  template:
+    metadata:
+      labels:
+        app: kube-git
+        istio-injection: enabled
+        version: v1
+    spec:
+      containers:
+        - name: gogs
+          image: gogs/gogs:0.13
+          ports:
+            - containerPort: 22
+              name: ssh
+            - containerPort: 3000
+              name: http
+          env:
+            - name: SOCAT_LINK
+              value: "false"
+          volumeMounts:
+            - name: kube-git-persistent-storage
+              mountPath: /data
+      volumes:
+        - name: kube-git-persistent-storage
+          persistentVolumeClaim:
+            claimName: kube-git-pv-claim
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 8.8.8.8
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-git
+  namespace: kube-git
+spec:
+  selector:
+    app: kube-git
+  ports:
+    - name: ssh
+      protocol: TCP
+      port: 10022
+      targetPort: 22
+    - name: http
+      protocol: TCP
+      port: 18080
+      targetPort: 3000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kube-git-ingress
+  namespace: kube-git
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: git.demo.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kube-git
+                port:
+                  number: 18080

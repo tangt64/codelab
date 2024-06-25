@@ -1,0 +1,2 @@
+YAMLs/k8s-argocd/argocd filter=lfs diff=lfs merge=lfs -text
+YAMLs/k8s-argocd/argocd-linux-amd64 filter=lfs diff=lfs merge=lfs -text
