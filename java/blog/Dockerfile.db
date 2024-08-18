@@ -1,5 +1,0 @@
-FROM library/postgres:9.2.19
-
-MAINTAINER "YOUR NAME<YOUR EMAIL>"
-
-ADD docker/create_tables.sql /docker-entrypoint-initdb.d/
