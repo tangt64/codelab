@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/instance: haproxy-kubernetes-ingress
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kubernetes-ingress
+    app.kubernetes.io/version: 1.11.4
+    helm.sh/chart: kubernetes-ingress-1.39.4
+  name: haproxy-kubernetes-ingress
+  namespace: haproxy-controller
+spec:
+  ports:
+  - name: port-1
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: port-2-tcp
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+  - name: port-2-udp
+    port: 8443
+    protocol: UDP
+    targetPort: 8443
+  - name: port-3
+    port: 1024
+    protocol: TCP
+    targetPort: 1024
+  selector:
+    app.kubernetes.io/instance: haproxy-kubernetes-ingress
+    app.kubernetes.io/name: kubernetes-ingress
+  type: LoadBalancer
+  loadBalancerIP: 192.168.10.240
+status:
+  loadBalancer: {}

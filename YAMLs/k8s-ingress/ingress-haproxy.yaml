@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-haproxy-demo
+  annotations:
+    kubernetes.io/ingressClassName: "haproxy"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - host: haproxy-demo.io
+    http:
+      paths:
+      - path: /demo
+        pathType: Prefix
+        backend:
+          service:
+            name: ingress-haproxy-demo
+            port:
+              number: 80
+                  

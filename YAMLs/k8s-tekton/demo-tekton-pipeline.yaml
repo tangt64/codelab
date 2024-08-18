@@ -1,0 +1,46 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: tekton-buildah-express-pipeline
+spec:
+  workspaces:
+    - name: pipeline-shared-data
+      description: |
+        This workspace will be shared throughout all steps.
+  params:
+    - name: image-repo
+      type: string
+      description: |
+        Docker image name
+      default: registry.demo.io
+  tasks:
+    - name: clone-repository
+      params:
+        - name: url
+          value: http://git.demo.io/demo/php-ip.git
+        - name: revision
+          value: "master"
+        - name: deleteExisting
+          value: "true"
+      taskRef:
+        kind: Task
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: pipeline-shared-data
+    - name: build-image
+      runAfter:
+        - clone-repository
+      params:
+        - name: IMAGE
+          value: "$(params.image-repo)/app/php-ip:test"
+        - name: TLSVERIFY
+          value: false
+        - name: DOCKERFILE
+          value: Containerfile
+      taskRef:
+        kind: Task
+        name: buildah
+      workspaces:
+        - name: source
+          workspace: pipeline-shared-data

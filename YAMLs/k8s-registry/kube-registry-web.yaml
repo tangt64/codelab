@@ -1,0 +1,82 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  namespace: kube-registry
+  name: kube-registry-dashboard
+  labels:
+    app: kube-registry-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-registry-dashboard
+  template:
+    metadata:
+      labels:
+        app: kube-registry-dashboard
+    spec:
+      containers:
+        - name: kube-registry-dashboard
+          image: joxit/docker-registry-ui:2.0
+          ports:
+            - name: dashboard
+              containerPort: 80
+          env:
+            - name: REGISTRY_URL
+              value: http://registry.demo.io
+            - name: SINGLE_REGISTRY
+              value: "true"
+            - name: REGISTRY_TITLE
+              value: registry
+            - name: DELETE_IMAGES
+              value: "true"
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 192.168.10.250
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: kube-registry-dashboard
+  name: kube-registry-dashboard
+  namespace: kube-registry
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: kube-registry-dashboard
+status:
+  loadBalancer: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: registry-dashboard-ingress
+  namespace: kube-registry
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingressClassName: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+status:
+  loadBalancer:
+    ingress:
+    - ip: 192.168.10.240
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: registry-dashboard.demo.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kube-registry-dashboard
+            port:
+              number: 80

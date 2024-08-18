@@ -1,0 +1,163 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-registry
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: kube-registry
+  name: kube-registry
+  namespace: kube-registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-registry
+  template:
+    metadata:
+      labels:
+        app: kube-registry
+    spec:
+      containers:
+      - image: docker.io/library/registry
+        name: registry
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: kube-registry
+  name: kube-registry
+  namespace: kube-registry
+spec:
+  ports:
+  - port: 5000
+    protocol: TCP
+    nodePort: 30500
+  selector:
+    app: kube-registry
+  type: NodePort
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: registry-ingress
+  namespace: kube-registry
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingressClassName: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS, DELETE"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,X-LANG,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,X-Api-Key,X-Device-Id,Access-Control-Allow-Origin"
+
+# status:
+#  loadBalancer:
+#    ingress:
+#    - ip: 192.168.10.240
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: registry.demo.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kube-registry
+            port:
+              number: 5000
+
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  namespace: kube-registry
+  name: kube-registry-dashboard
+  labels:
+    app: kube-registry-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-registry-dashboard
+  template:
+    metadata:
+      labels:
+        app: kube-registry-dashboard
+    spec:
+      containers:
+        - name: kube-registry-dashboard
+          image: joxit/docker-registry-ui:2.0
+          ports:
+            - name: dashboard
+              containerPort: 80
+          env:
+            - name: REGISTRY_URL
+              value: http://registry.demo.io
+            - name: SINGLE_REGISTRY
+              value: "true"
+            - name: REGISTRY_TITLE
+              value: registry
+            - name: DELETE_IMAGES
+              value: "true"
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 192.168.10.10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: kube-registry-dashboard
+  name: kube-registry-dashboard
+  namespace: kube-registry
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: kube-registry-dashboard
+status:
+  loadBalancer: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: registry-dashboard-ingress
+  namespace: kube-registry
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingressClassName: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+#status:
+#  loadBalancer:
+#    ingress:
+#    - ip: 192.168.10.240
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: registry-dashboard.demo.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kube-registry-dashboard
+            port:
+              number: 80

@@ -1,0 +1,8 @@
+---
+apiVersion: tekton.dev/v1 
+kind: TaskRun
+metadata:
+  generateName: helloworld-run
+spec:
+  taskRef:
+    name: demo-task-1
