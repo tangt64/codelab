@@ -3,6 +3,5 @@ RUN mkdir -p /usr/src/phpapp
 COPY . /usr/src/phpapp
 RUN apt update
 RUN apt install procps -y
-RUN apt clean
 WORKDIR /usr/src/phpapp
 CMD php -S 0.0.0.0:5000
