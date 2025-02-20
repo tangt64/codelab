@@ -29,7 +29,7 @@ net.bridge.bridge-nf-call-iptables=1
 net.ipv4.ip_forward=1
 net.bridge.bridge-nf-call-ip6tables=1
 EOF
-sysctl --system -q
+sysctl --system -q 1> /dev/null
 
 cat <<EOF> /etc/modules-load.d/k8s-modules.conf
 br_netfilter
