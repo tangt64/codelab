@@ -3,6 +3,10 @@
 export KUBERNETES_VERSION=v1.30
 export CRIO_VERSION=v1.30
 
+read -p "hostname: " var-hostname
+
+hostnamectl set-hostname $var-hostname
+
 cp kubernetes.repo cri-o.repo /etc/yum.repos.d/
 
 dnf install -y cri-o kubelet kubeadm kubectl
@@ -33,10 +37,4 @@ overlay
 EOF
 modprobe br_netfilter
 modprobe overlay
-
-cat <<EOF>> /etc/hosts
-192.168.10.20 cluster1-node1.example.com node1
-192.168.10.21 cluster1-node2.example.com node2
-192.168.10.22 cluster1.node3.example.com node3
-EOF
 
