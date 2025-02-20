@@ -3,9 +3,9 @@
 export KUBERNETES_VERSION=v1.30
 export CRIO_VERSION=v1.30
 
-read -p "hostname: " var-hostname
+read -p "hostname: " vhostname
 
-hostnamectl set-hostname $var-hostname
+hostnamectl set-hostname $vhostname
 
 cp kubernetes.repo cri-o.repo /etc/yum.repos.d/
 

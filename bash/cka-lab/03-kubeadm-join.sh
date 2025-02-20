@@ -1,6 +1,6 @@
 #!/bin/bash
 
-read -p "Controller API Address: " k8s-api-address
+read -p "Controller API Address: " k8sapiaddress
 
 cat <<EOF>> kubeadm-compute-join.yaml
 apiVersion: kubeadm.k8s.io/v1beta3
@@ -8,7 +8,7 @@ kind: JoinConfiguration
 caCertPath: /etc/kubernetes/pki/ca.crt
 discovery:
   bootstrapToken:
-    apiServerEndpoint: "${k8s-api-address}:6443"
+    apiServerEndpoint: "${k8sapiaddress}:6443"
     token: abcdef.0123456789abcdef
     unsafeSkipCAVerification: true
   timeout: 5m0s
