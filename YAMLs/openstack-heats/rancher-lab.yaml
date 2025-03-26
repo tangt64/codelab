@@ -1,0 +1,197 @@
+heat_template_version: 2018-08-31
+
+description: Rancher cluster with 6 nodes, static IPs, and SSH keypair
+
+parameters:
+  image:
+    type: string
+    default: lab-rocky-9
+  flavor:
+    type: string
+    default: t1.rancher
+
+resources:
+  rancher_internal_net:
+    type: OS::Neutron::Net
+    properties:
+      name: rancher-internal
+
+  rancher_internal_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      cidr: 192.168.10.0/24
+      ip_version: 4
+      name: rancher-internal-subnet
+      gateway_ip: 192.168.10.1
+      allocation_pools:
+        - start: 192.168.10.10
+          end: 192.168.10.250
+
+  rancher_external_net:
+    type: OS::Neutron::Net
+    properties:
+      name: rancher-external
+
+  rancher_external_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: rancher_external_net }
+      cidr: 192.168.20.0/24
+      ip_version: 4
+      name: rancher-external-subnet
+      gateway_ip: 192.168.20.1
+      allocation_pools:
+        - start: 192.168.20.10
+          end: 192.168.20.250
+
+
+  rancher_router:
+    type: OS::Neutron::Router
+    properties:
+      name: rancher-router
+
+  router_internal_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: rancher_router }
+      subnet_id: { get_resource: rancher_internal_subnet }
+
+  router_external_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: rancher_router }
+      subnet_id: { get_resource: rancher_external_subnet }
+
+  rancher_sg:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: rancher-sg
+      rules:
+        - protocol: icmp
+        - protocol: tcp
+          port_range_min: 1
+          port_range_max: 65535
+        - protocol: udp
+          port_range_min: 1
+          port_range_max: 65535
+
+# Node 1
+  node1_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips:
+        - ip_address: 192.168.10.250
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node1:
+    type: OS::Nova::Server
+    depends_on: node1_port
+    properties:
+      name: node1
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: rancher_key
+      networks:
+        - port: { get_resource: node1_port }
+
+# Node 2
+  node2_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips:
+        - ip_address: 192.168.10.10
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node2:
+    type: OS::Nova::Server
+    depends_on: node2_port
+    properties:
+      name: node2
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: rancher_key
+      networks:
+        - port: { get_resource: node2_port }
+
+# Node 3
+  node3_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips:
+        - ip_address: 192.168.10.20
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node3:
+    type: OS::Nova::Server
+    depends_on: node3_port
+    properties:
+      name: node3
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: rancher_key
+      networks:
+        - port: { get_resource: node3_port }
+
+# Node 4
+  node4_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips:
+        - ip_address: 192.168.10.30
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node4:
+    type: OS::Nova::Server
+    depends_on: node4_port
+    properties:
+      name: node4
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: rancher_key
+      networks:
+        - port: { get_resource: node4_port }
+
+# Node 5
+  node5_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips:
+        - ip_address: 192.168.10.40
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node5:
+    type: OS::Nova::Server
+    depends_on: node5_port
+    properties:
+      name: node5
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: rancher_key
+      networks:
+        - port: { get_resource: node5_port }
+
+# Node 6
+  node6_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips:
+        - ip_address: 192.168.10.50
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node6:
+    type: OS::Nova::Server
+    depends_on: node6_port
+    properties:
+      name: node6
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: rancher_key
+      networks:
+        - port: { get_resource: node6_port }
