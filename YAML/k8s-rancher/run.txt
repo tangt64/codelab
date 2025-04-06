@@ -1,0 +1,6 @@
+kubectl run --image=node1.example.com/testapp/php-blue-green:v1 php-pod
+kubectl get pod
+kubectl delete pod php-pod
+kubecrl get pod
+kubectl run --image=node1.example.com/testapp/php-blue-green:v1 --dry-run=client --output=yaml php-pod-v1 > php-pod-v1.yaml
+ls -l php-pod.yaml

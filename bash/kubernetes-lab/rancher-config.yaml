@@ -1,0 +1,33 @@
+---
+write-kubeconfig-mode: "0644"
+advertise-address: ""
+server: ""
+token: ""
+node-name: bootstrap
+tls-san:
+  - 192.168.10.250
+  - example.com
+  - controller1.example.com
+  - controller2.example.com
+  - controller3.example.com
+  - n
+cluster-cidr: 192.168.0.0/16
+service-cidr: 10.88.0.0/16
+cluster-dns: 10.88.0.10
+cluster-domain: rke2-cluster.example.com
+etcd-arg: "--quota-backend-bytes 2048000000"
+etcd-snapshot-schedule-cron: "0 3 * * *"
+etcd-snapshot-retention: 10
+disable: {}
+disable-kube-proxy: true
+kube-apiserver-arg:
+  - '--default-not-ready-toleration-seconds=30'
+  - '--default-unreachable-toleration-seconds=30'
+kube-controller-manager-arg:
+  - '--node-monitor-period=4s'
+kubelet-arg:
+  - '--node-status-update-frequency=4s'
+  - '--max-pods=100'
+egress-selector-mode: disabled
+protect-kernel-defaults: true
+cni: "flannel"

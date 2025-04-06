@@ -1,0 +1,28 @@
+---
+write-kubeconfig-mode: "0644"
+token: ""
+server: ""
+tls-san:
+  - 192.168.10.250
+  - 192.168.10.240
+  - 192.168.10.10
+  - 192.168.10.20
+  - 192.168.10.30
+  - 192.168.10.40
+  - 192.168.10.50
+  - bootstrap.example.com
+  - control1.example.com
+  - control2.example.com
+  - control3.example.com
+  - compute1.example.com
+  - compute2.example.com
+node-ip: "192.168.10.240"
+node-name: "bootstrap-node"
+node-external-ip: "192.168.10.240"
+cni: "flannel"
+cluster-domain: "rancher.example.com"
+cluster-cidr: "192.168.0.0/16"
+service-cidr: "10.88.0.0/16"
+cluster-dns: "10.88.0.10"
+disable:
+  - rke2-ingress

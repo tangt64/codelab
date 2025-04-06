@@ -1,0 +1,22 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sts-app
+spec:
+  serviceName: "nginx"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sts-app
+  template:
+    metadata:
+      labels:
+        app: sts-app
+    spec:
+      containers:
+      - name: nginx
+        image: registry.k8s.io/nginx-slim:0.21
+        ports:
+        - containerPort: 80
+          name: web

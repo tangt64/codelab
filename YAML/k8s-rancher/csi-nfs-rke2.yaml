@@ -1,0 +1,26 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: csi-nfs
+  namespace: kube-system
+spec:
+  chart: csi-driver-nfs
+  repo: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+  version: 4.0.18
+  targetNamespace: kube-system
+ valuesContent: |-
+    controller:
+      replicas: 1
+    nfs:
+      server: "192.168.10.250"
+      path: "/nfs/"
+    storageClass:
+      create: true
+      defaultClass: false
+      name: nfs-csi
+      reclaimPolicy: Retain
+      volumeBindingMode: Immediate
+      allowVolumeExpansion: true
+
+    rbac:
+      create: true

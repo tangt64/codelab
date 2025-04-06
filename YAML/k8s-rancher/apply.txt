@@ -1,0 +1,7 @@
+kubectl create deployment --image=nginx:1.26.3 deploy-nginx \
+--output=yaml --dry-run=client > deploy-nginx.yaml
+kubectl apply -f deploy-nginx.yaml
+kubectl get -f deploy-nginx.yaml
+kubectl create deployment --image=nginx:1.27.4 deploy-nginx \
+--output=yaml --dry-run=client > deploy-nginx.yaml
+kubectl apply -f deploy-nginx.yaml

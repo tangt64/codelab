@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-compute1
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: nginx-compute1
+  template:
+    metadata:
+      labels:
+        app: nginx-compute1
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: compute1.example.com
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80

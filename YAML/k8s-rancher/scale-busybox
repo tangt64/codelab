@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scale-busybox
+  labels:
+    app: scale-busybox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scale-busybox
+  template:
+    metadata:
+      labels:
+        app: scale-busybox
+    spec:
+      containers:
+      - name: scale-busybox
+        image: busybox
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - "while true; do yes > /dev/null; sleep 1; done"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"

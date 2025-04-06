@@ -1,0 +1,11 @@
+---
+server: "https://192.168.10.250:9345"
+write-kubeconfig-mode: "0644"
+token: "K1041bcb726367b08d7da456421d6be5183d1eaa1228c9b732cd3b0989b6a11b604::server:1b33f4e20376938268c5e40b4aa1ef47"
+node-name: "compute1.example.com"
+node-ip:  "192.168.10.40"
+node-external-ip: "192.168.10.40"
+cluster-domain: "rancher.example.com"
+cluster-cidr: "192.168.0.0/16"
+service-cidr: "11.88.0.0/16"
+cluster-dns: "11.88.0.10"

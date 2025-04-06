@@ -5,65 +5,44 @@ description: Rancher cluster with 6 nodes, static IPs, and SSH keypair
 parameters:
   image:
     type: string
-    default: lab-rocky-9
-  flavor:
+    default: lab-rocky-9-rev2
+  flavor_haproxy:
     type: string
-    default: t1.rancher
+    default: t1.rancher-haproxy
+  flavor_bootstrap:
+    type: string
+    default:  t1.rancher-bootstrap 
+  flavor_controller:
+    type: string
+    default: t1.rancher-controller
+  flavor_compute:
+    type: string
+    default: t1.rancher-compute
+  key_name:
+    type: string
+    default: rancher_key
 
 resources:
   rancher_internal_net:
     type: OS::Neutron::Net
     properties:
       name: rancher-internal
-      value_specs: { mtu: 1500 }
+      value_specs:
+        mtu: 1450
 
   rancher_internal_subnet:
     type: OS::Neutron::Subnet
     properties:
       network_id: { get_resource: rancher_internal_net }
-      cidr: 192.168.10.0/24
+      cidr: 192.168.10.0/16
       ip_version: 4
       name: rancher-internal-subnet
-      gateway_ip: 192.168.10.1
+      enable_dhcp: false
+      gateway_ip: null
+      dns_nameservers: [ 192.168.10.250 ]
       allocation_pools:
-        - start: 192.168.10.10
-          end: 192.168.10.250
-
-  rancher_external_net:
-    type: OS::Neutron::Net
-    properties:
-      name: rancher-external
-      value_specs: { mtu: 1500 }
-
-  rancher_external_subnet:
-    type: OS::Neutron::Subnet
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      cidr: 192.168.20.0/24
-      ip_version: 4
-      name: rancher-external-subnet
-      gateway_ip: 192.168.20.1
-      allocation_pools:
-        - start: 192.168.20.10
-          end: 192.168.20.250
-
-
-  rancher_router:
-    type: OS::Neutron::Router
-    properties:
-      name: rancher-router
-
-  router_internal_interface:
-    type: OS::Neutron::RouterInterface
-    properties:
-      router_id: { get_resource: rancher_router }
-      subnet_id: { get_resource: rancher_internal_subnet }
-
-  router_external_interface:
-    type: OS::Neutron::RouterInterface
-    properties:
-      router_id: { get_resource: rancher_router }
-      subnet_id: { get_resource: rancher_external_subnet }
+        - start: 192.168.10.2
+          end: 192.168.10.254
 
   rancher_sg:
     type: OS::Neutron::SecurityGroup
@@ -78,8 +57,8 @@ resources:
           port_range_min: 1
           port_range_max: 65535
 
-# Node 1
-  node1_port:
+### NODE 1: HAPROXY
+  node1_internal_port:
     type: OS::Neutron::Port
     properties:
       network_id: { get_resource: rancher_internal_net }
@@ -87,19 +66,67 @@ resources:
         - ip_address: 192.168.10.250
       security_groups: [ { get_resource: rancher_sg } ]
 
+  node1_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: infra-net
+      security_groups:
+        - { get_resource: rancher_sg }
+
   node1:
     type: OS::Nova::Server
-    depends_on: node1_port
+    depends_on: [node1_internal_port]
     properties:
-      name: node1
+      name: haproxy
       image: { get_param: image }
-      flavor: { get_param: flavor }
-      key_name: rancher_key
+      flavor: { get_param: flavor_haproxy }
+      key_name: { get_param: key_name }
       networks:
-        - port: { get_resource: node1_port }
+        - port: { get_resource: node1_infra_port } 
+        - port: { get_resource: node1_internal_port }       
+      user_data: |
+        #cloud-config
+        runcmd:
+          - echo "Hello from haproxy" > /etc/motd
 
-# Node 2
-  node2_port:
+### NODE 2: BOOTSTRAP
+  node2_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips:
+        - ip_address: 192.168.10.240
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node2_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: infra-net
+      security_groups:
+        - { get_resource: rancher_sg }
+
+  node2:
+    type: OS::Nova::Server
+    depends_on: [node2_internal_port]
+    properties:
+      name: bootstrap
+      image: { get_param: image }
+      flavor: { get_param: flavor_bootstrap }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: node2_infra_port } 
+        - port: { get_resource: node2_internal_port }     
+      user_data: |
+        #cloud-config
+        runcmd:
+          - export INSTALL_RKE2_VERSION="v1.30.0+rke2r1"
+          - export INSTALL_RKE2_CHANNEL="stable"
+          - export INSTALL_RKE2_TYPE="server"
+          - curl -sfL https://get.rke2.io > /root/install_rke2.sh
+          - chmod ug+x /root/install_rke2.sh/install_rke2.sh
+
+### NODE 3: CONTROL1
+  node3_internal_port:
     type: OS::Neutron::Port
     properties:
       network_id: { get_resource: rancher_internal_net }
@@ -107,19 +134,35 @@ resources:
         - ip_address: 192.168.10.10
       security_groups: [ { get_resource: rancher_sg } ]
 
-  node2:
-    type: OS::Nova::Server
-    depends_on: node2_port
+  node3_infra_port:
+    type: OS::Neutron::Port
     properties:
-      name: node2
-      image: { get_param: image }
-      flavor: { get_param: flavor }
-      key_name: rancher_key
-      networks:
-        - port: { get_resource: node2_port }
+      network: infra-net
+      security_groups:
+        - { get_resource: rancher_sg }
 
-# Node 3
-  node3_port:
+  node3:
+    type: OS::Nova::Server
+    depends_on: [node3_internal_port]
+    properties:
+      name: control1
+      image: { get_param: image }
+      flavor: { get_param: flavor_controller }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: node3_infra_port } 
+        - port: { get_resource: node3_internal_port }
+      user_data: |
+        #cloud-config
+        runcmd:
+          - export INSTALL_RKE2_VERSION="v1.30.0+rke2r1"
+          - export INSTALL_RKE2_CHANNEL="stable"
+          - export INSTALL_RKE2_TYPE="server"
+          - curl -sfL https://get.rke2.io > install_rke2.sh
+          - chmod ug+x install_rke2.sh
+
+### NODE 4: CONTROL2
+  node4_internal_port:
     type: OS::Neutron::Port
     properties:
       network_id: { get_resource: rancher_internal_net }
@@ -127,19 +170,35 @@ resources:
         - ip_address: 192.168.10.20
       security_groups: [ { get_resource: rancher_sg } ]
 
-  node3:
-    type: OS::Nova::Server
-    depends_on: node3_port
+  node4_infra_port:
+    type: OS::Neutron::Port
     properties:
-      name: node3
-      image: { get_param: image }
-      flavor: { get_param: flavor }
-      key_name: rancher_key
-      networks:
-        - port: { get_resource: node3_port }
+      network: infra-net
+      security_groups:
+        - { get_resource: rancher_sg }
 
-# Node 4
-  node4_port:
+  node4:
+    type: OS::Nova::Server
+    depends_on: [node4_internal_port]
+    properties:
+      name: control2
+      image: { get_param: image }
+      flavor: { get_param: flavor_controller }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: node4_infra_port } 
+        - port: { get_resource: node4_internal_port }
+      user_data: |
+        #cloud-config
+        runcmd:
+          - export INSTALL_RKE2_VERSION="v1.30.0+rke2r1"
+          - export INSTALL_RKE2_CHANNEL="stable"
+          - export INSTALL_RKE2_TYPE="server"
+          - curl -sfL https://get.rke2.io > install_rke2.sh
+          - chmod ug+x install_rke2.sh
+
+### NODE 5: CONTROL3
+  node5_internal_port:
     type: OS::Neutron::Port
     properties:
       network_id: { get_resource: rancher_internal_net }
@@ -147,19 +206,35 @@ resources:
         - ip_address: 192.168.10.30
       security_groups: [ { get_resource: rancher_sg } ]
 
-  node4:
-    type: OS::Nova::Server
-    depends_on: node4_port
+  node5_infra_port:
+    type: OS::Neutron::Port
     properties:
-      name: node4
-      image: { get_param: image }
-      flavor: { get_param: flavor }
-      key_name: rancher_key
-      networks:
-        - port: { get_resource: node4_port }
+      network: infra-net
+      security_groups:
+        - { get_resource: rancher_sg }
 
-# Node 5
-  node5_port:
+  node5:
+    type: OS::Nova::Server
+    depends_on: [node5_internal_port]
+    properties:
+      name: control3
+      image: { get_param: image }
+      flavor: { get_param: flavor_controller }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: node5_infra_port } 
+        - port: { get_resource: node5_internal_port }
+      user_data: |
+        #cloud-config
+        runcmd:
+          - export INSTALL_RKE2_VERSION="v1.30.0+rke2r1"
+          - export INSTALL_RKE2_CHANNEL="stable"
+          - export INSTALL_RKE2_TYPE="server"
+          - curl -sfL https://get.rke2.io > install_rke2.sh
+          - chmod ug+x install_rke2.sh
+
+### NODE 6: COMPUTE1
+  node6_internal_port:
     type: OS::Neutron::Port
     properties:
       network_id: { get_resource: rancher_internal_net }
@@ -167,33 +242,29 @@ resources:
         - ip_address: 192.168.10.40
       security_groups: [ { get_resource: rancher_sg } ]
 
-  node5:
-    type: OS::Nova::Server
-    depends_on: node5_port
-    properties:
-      name: node5
-      image: { get_param: image }
-      flavor: { get_param: flavor }
-      key_name: rancher_key
-      networks:
-        - port: { get_resource: node5_port }
-
-# Node 6
-  node6_port:
+  node6_infra_port:
     type: OS::Neutron::Port
     properties:
-      network_id: { get_resource: rancher_internal_net }
-      fixed_ips:
-        - ip_address: 192.168.10.50
-      security_groups: [ { get_resource: rancher_sg } ]
+      network: infra-net
+      security_groups:
+        - { get_resource: rancher_sg }
 
   node6:
     type: OS::Nova::Server
-    depends_on: node6_port
+    depends_on: [node6_internal_port]
     properties:
-      name: node6
+      name: compute1
       image: { get_param: image }
-      flavor: { get_param: flavor }
-      key_name: rancher_key
+      flavor: { get_param: flavor_compute }
+      key_name: { get_param: key_name }
       networks:
-        - port: { get_resource: node6_port }
+        - port: { get_resource: node6_infra_port } 
+        - port: { get_resource: node6_internal_port }
+      user_data: |
+        #cloud-config
+        runcmd:
+          - export INSTALL_RKE2_VERSION="v1.30.0+rke2r1"
+          - export INSTALL_RKE2_CHANNEL="stable"
+          - export INSTALL_RKE2_TYPE="agent"
+          - curl -sfL https://get.rke2.io > install_rke2.sh
+          - chmod ug+x install_rke2.sh

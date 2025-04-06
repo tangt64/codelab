@@ -1,0 +1,23 @@
+serviceAccount:
+  create: true
+  name: nfs-provisioner-sa
+  annotations: {}  # 필요시 여기에 추가 주석 설정
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["persistentvolumes"]
+      verbs: ["get", "list", "watch", "create", "delete"]
+- apiGroups: [""]
+      resources: ["persistentvolumeclaims"]
+      verbs: ["get", "list", "watch", "update"]
+    - apiGroups: ["storage.k8s.io"]
+      resources: ["storageclasses"]
+      verbs: ["get", "list", "watch"]
+nfs:
+  server: 192.168.20.250
+  path: /nfs/
+storageClass:
+  name: nfs-storage
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate

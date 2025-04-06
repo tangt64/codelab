@@ -1,0 +1,9 @@
+kubectl create -f php-pod-v1.yaml
+kubectl get pod
+kubectl run pod --image=nginx pod-ngnix --output=yaml --dry-run=client > pod-nginx.yaml
+kubectl create -f pod-nginx.yaml
+kubectl create deployment --image=nginx deploy-nginx --output=yaml \
+--dry-run=client > deploy-nginx.yaml
+kubectl create -f deploy-nginx.yaml
+kubectl create service --type=NodePort --output=yaml --dry-run=client > svc-nginx.yaml
+kubectl create -f deploy-nginx.yaml

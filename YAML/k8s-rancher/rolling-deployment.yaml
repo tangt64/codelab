@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rolling-deployment
+  labels:
+    app: rolling-nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: rolling-nginx
+  template:
+    metadata:
+      labels:
+        app: rolling-nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.19
+        ports:
+        - containerPort: 80
