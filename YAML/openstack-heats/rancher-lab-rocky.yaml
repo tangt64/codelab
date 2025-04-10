@@ -1,0 +1,385 @@
+heat_template_version: 2018-08-31
+
+description: Rancher cluster with 6 nodes, static IPs, SSH keypair, router setup, external access, and VNC support
+
+parameters:
+  image:
+    type: string
+    default: rancher-rocky
+  flavor_haproxy:
+    type: string
+    default: t1.rancher-haproxy
+  flavor_bootstrap:
+    type: string
+    default: t1.rancher-bootstrap
+  flavor_controller:
+    type: string
+    default: t1.rancher-controller
+  flavor_compute:
+    type: string
+    default: t1.rancher-compute
+  key_name:
+    type: string
+    default: rancher_key
+
+resources:
+  rancher_internal_net:
+    type: OS::Neutron::Net
+    properties:
+      name: rancher-internal
+      value_specs:
+        mtu: 1450
+
+  rancher_internal_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      cidr: 192.168.10.0/16
+      ip_version: 4
+      name: rancher-internal-subnet
+      enable_dhcp: true
+      gateway_ip: 192.168.10.1
+      dns_nameservers: [192.168.10.250, 8.8.8.8]
+      allocation_pools:
+        - start: 192.168.10.2
+          end: 192.168.10.254
+
+  rancher_router:
+    type: OS::Neutron::Router
+    properties:
+      name: rancher-router
+
+  rancher_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: rancher_router }
+      subnet_id: { get_resource: rancher_internal_subnet }
+
+  rancher_external_net:
+    type: OS::Neutron::Net
+    properties:
+      name: rancher-external
+
+  rancher_external_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: rancher_external_net }
+      cidr: 192.10.10.0/24
+      ip_version: 4
+      name: rancher-external-subnet
+      gateway_ip: 192.10.10.1
+      allocation_pools:
+        - start: 192.10.10.2
+          end: 192.10.10.254
+
+  rancher_sg:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: rancher-sg
+      rules:
+        - protocol: icmp
+        - protocol: tcp
+          port_range_min: 1
+          port_range_max: 65535
+        - protocol: udp
+          port_range_min: 1
+          port_range_max: 65535
+
+  # 추가 internal 포트 4개 생성 (251~254)
+  extra_internal_port_251:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips: [ { ip_address: 192.168.10.251 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  extra_internal_port_252:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips: [ { ip_address: 192.168.10.252 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  extra_internal_port_253:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips: [ { ip_address: 192.168.10.253 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  extra_internal_port_254:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips: [ { ip_address: 192.168.10.254 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node1_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips: [ { ip_address: 192.168.10.250 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node1_external_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_external_net }
+      fixed_ips: [ { ip_address: 192.10.10.250 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node1_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: infra-net
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  client_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips: [ { ip_address: 192.168.10.241 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  client_external_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_external_net }
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node1:
+    type: OS::Nova::Server
+    properties:
+      name: haproxy
+      image: { get_param: image }
+      flavor: { get_param: flavor_haproxy }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: node1_internal_port }
+        - port: { get_resource: node1_external_port }
+        - port: { get_resource: node1_infra_port }
+
+  node2_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips: [ { ip_address: 192.168.10.240 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node2_external_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_external_net }
+      fixed_ips: [ { ip_address: 192.10.10.240 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node2_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: infra-net
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node2:
+    type: OS::Nova::Server
+    properties:
+      name: bootstrap
+      image: { get_param: image }
+      flavor: { get_param: flavor_bootstrap }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: node2_internal_port }
+        - port: { get_resource: node2_external_port }
+        - port: { get_resource: node2_infra_port }
+
+  node3_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips: [ { ip_address: 192.168.10.10 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node3_external_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_external_net }
+      fixed_ips: [ { ip_address: 192.10.10.10 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node3_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: infra-net
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node3:
+    type: OS::Nova::Server
+    properties:
+      name: control1
+      image: { get_param: image }
+      flavor: { get_param: flavor_controller }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: node3_internal_port }
+        - port: { get_resource: node3_external_port }
+        - port: { get_resource: node3_infra_port }
+
+  node4_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips: [ { ip_address: 192.168.10.20 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node4_external_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_external_net }
+      fixed_ips: [ { ip_address: 192.10.10.20 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node4_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: infra-net
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node4:
+    type: OS::Nova::Server
+    properties:
+      name: control2
+      image: { get_param: image }
+      flavor: { get_param: flavor_controller }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: node4_internal_port }
+        - port: { get_resource: node4_external_port }
+        - port: { get_resource: node4_infra_port }
+
+  node5_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips: [ { ip_address: 192.168.10.30 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node5_external_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_external_net }
+      fixed_ips: [ { ip_address: 192.10.10.30 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node5_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: infra-net
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node5:
+    type: OS::Nova::Server
+    properties:
+      name: control3
+      image: { get_param: image }
+      flavor: { get_param: flavor_controller }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: node5_internal_port }
+        - port: { get_resource: node5_external_port }
+        - port: { get_resource: node5_infra_port }
+
+  node6_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_internal_net }
+      fixed_ips: [ { ip_address: 192.168.10.40 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node6_external_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: rancher_external_net }
+      fixed_ips: [ { ip_address: 192.10.10.40 } ]
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node6_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: infra-net
+      security_groups: [ { get_resource: rancher_sg } ]
+
+  node6:
+    type: OS::Nova::Server
+    properties:
+      name: compute1
+      image: { get_param: image }
+      flavor: { get_param: flavor_compute }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: node6_internal_port }
+        - port: { get_resource: node6_external_port }
+        - port: { get_resource: node6_infra_port }
+
+  client:
+    type: OS::Nova::Server
+    properties:
+      name: rancher-client
+      image: { get_param: image }
+      flavor: v1.middle
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: client_internal_port }
+        - port: { get_resource: client_external_port }
+
+
+outputs:
+  node1_internal_ip:
+    description: Internal IP of node1 (haproxy)
+    value: { get_attr: [ node1_internal_port, fixed_ips, 0, ip_address ] }
+
+  node2_internal_ip:
+    description: Internal IP of node2 (bootstrap)
+    value: { get_attr: [ node2_internal_port, fixed_ips, 0, ip_address ] }
+
+  node3_internal_ip:
+    description: Internal IP of node3 (control1)
+    value: { get_attr: [ node3_internal_port, fixed_ips, 0, ip_address ] }
+
+  node4_internal_ip:
+    description: Internal IP of node4 (control2)
+    value: { get_attr: [ node4_internal_port, fixed_ips, 0, ip_address ] }
+
+  node5_internal_ip:
+    description: Internal IP of node5 (control3)
+    value: { get_attr: [ node5_internal_port, fixed_ips, 0, ip_address ] }
+
+  node6_internal_ip:
+    description: Internal IP of node6 (compute1)
+    value: { get_attr: [ node6_internal_port, fixed_ips, 0, ip_address ] }
+
+  node1_external_ip:
+    description: External IP of node1 (haproxy)
+    value: { get_attr: [ node1_external_port, fixed_ips, 0, ip_address ] }
+
+  node2_external_ip:
+    description: External IP of node2 (bootstrap)
+    value: { get_attr: [ node2_external_port, fixed_ips, 0, ip_address ] }
+
+  node3_external_ip:
+    description: External IP of node3 (control1)
+    value: { get_attr: [ node3_external_port, fixed_ips, 0, ip_address ] }
+
+  node4_external_ip:
+    description: External IP of node4 (control2)
+    value: { get_attr: [ node4_external_port, fixed_ips, 0, ip_address ] }
+
+  node5_external_ip:
+    description: External IP of node5 (control3)
+    value: { get_attr: [ node5_external_port, fixed_ips, 0, ip_address ] }
+
+  node6_external_ip:
+    description: External IP of node6 (compute1)
+    value: { get_attr: [ node6_external_port, fixed_ips, 0, ip_address ] }
+
+  client_internal_ip:
+    description: Internal IP of client (rancher-client)
+    value: { get_attr: [ client_internal_port, fixed_ips, 0, ip_address ] }
