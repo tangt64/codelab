@@ -1,5 +1,5 @@
 ---
-server: https://192.168.10.250:9345
+server: "https://192.168.10.250:9345"
 write-kubeconfig-mode: "0644"
 tls-san:
   - 192.168.10.250
@@ -9,18 +9,37 @@ tls-san:
   - 192.168.10.30
   - 192.168.10.40
   - 192.168.10.50
+  - 192.10.10.250
+  - 192.10.10.240
+  - 192.10.10.10
+  - 192.10.10.20
+  - 192.10.10.30
+  - 192.10.10.40
+  - 192.10.10.50
   - bootstrap.example.com
+  - rancher.example.com
+  - cli.example.com
+  - dashboard.example.com
   - control1.example.com
   - control2.example.com
   - control3.example.com
   - compute1.example.com
   - compute2.example.com
-token: "K10791f3304d9461cf87886ab23d48ba8678e862164db8982ad6329c8feeb5546e2::server:9f17c30becc65a770597c7fbb1f3a0df"
+token: "K10dc5494063cfddd9fe22f9a3977584fbd5cfee35d0eaf1fb3498b0f2bb48616e2::server:175e88fa7ccc44fac22862f693692c0b"
 node-name: "control1.example.com"
-node-ip:  "192.168.10.10"
-cluster-domain: "rancher.example.com" 
-node-external-ip: "192.168.10.10"
-cluster-cidr: "192.168.0.0/16"
-service-cidr: "11.88.0.0/16"
-cluster-dns: "11.88.0.10"
-cni: "flannel"    
+node-ip: "192.168.10.10"
+node-external-ip: "192.10.10.10"
+disable-kube-proxy: false
+cni: "flannel"
+cluster-domain: "rancher.example.com"
+cluster-cidr: "11.44.0.0/16"
+service-cidr: "12.88.0.0/16"
+cluster-dns: "12.88.0.10"
+cluster-name: "rke2-lab-cluster"
+flannel-iface: "ens3"
+kube-proxy-arg:
+  - proxy-mode=ipvs
+  - ipvs-strict-arp=true
+disable:
+  - servicelb
+  - traefik

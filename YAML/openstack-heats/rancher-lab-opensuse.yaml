@@ -38,7 +38,7 @@ resources:
       ip_version: 4
       enable_dhcp: false
       gateway_ip: null
-      dns_nameservers: [192.168.10.250, 192.10.10.250, 8.8.8.8]
+      dns_nameservers: [192.168.10.240, 192.10.10.204, 8.8.8.8]
       allocation_pools:
         - start: 192.168.10.2
           end: 192.168.10.254
