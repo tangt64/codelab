@@ -1,0 +1,69 @@
+---
+- name: Configure remote hosts
+  hosts: all
+  become: true
+  vars:
+    ansible_host_mapping:
+      192.168.10.10: node1.example.com
+      192.168.10.20: node2.example.com
+
+  tasks:
+    - name: Set hostname
+      hostname:
+        name: "{{ ansible_host_mapping[inventory_hostname] }}"
+
+    - name: Update all packages
+      package:
+        name: '*'
+        state: latest
+
+    - name: Partition /dev/vdf
+      parted:
+        device: /dev/vdf
+        number: 1
+        state: present
+        part_type: primary
+        fs_type: ext4
+        start: 0%
+        end: 50%
+
+    - name: Create second partition /dev/vdf2
+      parted:
+        device: /dev/vdf
+        number: 2
+        state: present
+        part_type: primary
+        fs_type: xfs
+        start: 50%
+        end: 100%
+
+    - name: Format first partition as ext4
+      filesystem:
+        fstype: ext4
+        dev: /dev/vdf1
+
+    - name: Format second partition as xfs
+      filesystem:
+        fstype: xfs
+        dev: /dev/vdf2
+
+    - name: Install cockpit
+      package:
+        name: cockpit
+        state: present
+
+    - name: Enable and start cockpit services
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      loop:
+        - cockpit.service
+        - cockpit.socket
+
+    - name: Open port 9090/tcp in firewalld
+      firewalld:
+        port: 9090/tcp
+        permanent: true
+        state: enabled
+        immediate: yes

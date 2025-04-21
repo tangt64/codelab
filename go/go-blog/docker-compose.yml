@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  blog:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: blog
+      POSTGRES_PASSWORD: blog
+      POSTGRES_DB: blog
+    ports:
+      - "5432:5432"

@@ -1,0 +1,9 @@
+FROM golang:1.21
+
+WORKDIR /app
+COPY . .
+
+RUN go mod init blog && go mod tidy
+RUN go build -o blog
+
+CMD ["./blog"]
