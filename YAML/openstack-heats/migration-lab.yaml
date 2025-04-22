@@ -1,0 +1,202 @@
+
+heat_template_version: 2018-08-31
+
+description: >
+  lab-opensuse-15.6-rev3과 lab-rocky-9-rev3 인스턴스를 각각 4대씩 생성.
+  네트워크: lab-migration-network / CIDR: 192.168.10.0/24 / Gateway: 192.168.10.1
+  보안그룹 lab-migration 생성 (TCP, UDP, ICMP 허용)
+  키페어는 사전에 생성된 lab-migration을 사용
+  모든 인스턴스는 infra-net에도 연결됨
+
+parameters:
+  flavor:
+    type: string
+    default: v1.middle
+  image_opensuse:
+    type: string
+    default: lab-opensuse-15.6-rev3
+  image_rocky:
+    type: string
+    default: lab-rocky-9-rev3
+
+resources:
+  lab_network:
+    type: OS::Neutron::Net
+    properties:
+      name: lab-migration-network
+
+  lab_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: lab-migration-subnet
+      network_id: { get_resource: lab_network }
+      cidr: 192.168.10.0/24
+      ip_version: 4
+      gateway_ip: 192.168.10.1
+      enable_dhcp: true
+      dns_nameservers: [8.8.8.8]
+
+  lab_sg:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: lab-migration
+      description: Allow all traffic
+      rules:
+        - protocol: tcp
+          direction: ingress
+        - protocol: udp
+          direction: ingress
+        - protocol: icmp
+          direction: ingress
+
+
+  opensuse_port0:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: lab_network }
+      fixed_ips: [{ ip_address: 192.168.10.10 }]
+      security_groups: [ { get_resource: lab_sg } ]
+
+  opensuse0:
+    type: OS::Nova::Server
+    properties:
+      name: opensuse-0
+      image: { get_param: image_opensuse }
+      flavor: { get_param: flavor }
+      key_name: lab-migration
+      networks:
+        - port: { get_resource: opensuse_port0 }
+        - network: infra-net
+
+
+  opensuse_port1:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: lab_network }
+      fixed_ips: [{ ip_address: 192.168.10.11 }]
+      security_groups: [ { get_resource: lab_sg } ]
+
+  opensuse1:
+    type: OS::Nova::Server
+    properties:
+      name: opensuse-1
+      image: { get_param: image_opensuse }
+      flavor: { get_param: flavor }
+      key_name: lab-migration
+      networks:
+        - port: { get_resource: opensuse_port1 }
+        - network: infra-net
+
+
+  opensuse_port2:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: lab_network }
+      fixed_ips: [{ ip_address: 192.168.10.12 }]
+      security_groups: [ { get_resource: lab_sg } ]
+
+  opensuse2:
+    type: OS::Nova::Server
+    properties:
+      name: opensuse-2
+      image: { get_param: image_opensuse }
+      flavor: { get_param: flavor }
+      key_name: lab-migration
+      networks:
+        - port: { get_resource: opensuse_port2 }
+        - network: infra-net
+
+
+  opensuse_port3:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: lab_network }
+      fixed_ips: [{ ip_address: 192.168.10.13 }]
+      security_groups: [ { get_resource: lab_sg } ]
+
+  opensuse3:
+    type: OS::Nova::Server
+    properties:
+      name: opensuse-3
+      image: { get_param: image_opensuse }
+      flavor: { get_param: flavor }
+      key_name: lab-migration
+      networks:
+        - port: { get_resource: opensuse_port3 }
+        - network: infra-net
+
+
+  rocky_port0:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: lab_network }
+      fixed_ips: [{ ip_address: 192.168.10.20 }]
+      security_groups: [ { get_resource: lab_sg } ]
+
+  rocky0:
+    type: OS::Nova::Server
+    properties:
+      name: rocky-0
+      image: { get_param: image_rocky }
+      flavor: { get_param: flavor }
+      key_name: lab-migration
+      networks:
+        - port: { get_resource: rocky_port0 }
+        - network: infra-net
+
+
+  rocky_port1:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: lab_network }
+      fixed_ips: [{ ip_address: 192.168.10.21 }]
+      security_groups: [ { get_resource: lab_sg } ]
+
+  rocky1:
+    type: OS::Nova::Server
+    properties:
+      name: rocky-1
+      image: { get_param: image_rocky }
+      flavor: { get_param: flavor }
+      key_name: lab-migration
+      networks:
+        - port: { get_resource: rocky_port1 }
+        - network: infra-net
+
+
+  rocky_port2:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: lab_network }
+      fixed_ips: [{ ip_address: 192.168.10.22 }]
+      security_groups: [ { get_resource: lab_sg } ]
+
+  rocky2:
+    type: OS::Nova::Server
+    properties:
+      name: rocky-2
+      image: { get_param: image_rocky }
+      flavor: { get_param: flavor }
+      key_name: lab-migration
+      networks:
+        - port: { get_resource: rocky_port2 }
+        - network: infra-net
+
+
+  rocky_port3:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: lab_network }
+      fixed_ips: [{ ip_address: 192.168.10.23 }]
+      security_groups: [ { get_resource: lab_sg } ]
+
+  rocky3:
+    type: OS::Nova::Server
+    properties:
+      name: rocky-3
+      image: { get_param: image_rocky }
+      flavor: { get_param: flavor }
+      key_name: lab-migration
+      networks:
+        - port: { get_resource: rocky_port3 }
+        - network: infra-net
