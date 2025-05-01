@@ -2,7 +2,20 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kube-registry
+ name: kube-registry
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docker-pvc
+  namespace: kube-registry
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: default
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -26,6 +39,13 @@ spec:
         name: registry
         ports:
         - containerPort: 5000
+        volumeMounts:
+        - mountPath: /var/lib/registry
+          name: registry-storage
+      volumes:
+      - name: registry-storage
+        persistentVolumeClaim:
+          claimName: docker-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -60,15 +80,10 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS, DELETE"
     nginx.ingress.kubernetes.io/cors-allow-origin: "*"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,X-LANG,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,X-Api-Key,X-Device-Id,Access-Control-Allow-Origin"
-
-# status:
-#  loadBalancer:
-#    ingress:
-#    - ip: 192.168.10.240
 spec:
   ingressClassName: nginx
   rules:
-  - host: registry.demo.io
+  - host: registry.example.com
     http:
       paths:
       - path: /
@@ -105,7 +120,7 @@ spec:
               containerPort: 80
           env:
             - name: REGISTRY_URL
-              value: http://registry.demo.io
+              value: http://registry.example.com
             - name: SINGLE_REGISTRY
               value: "true"
             - name: REGISTRY_TITLE
@@ -115,7 +130,7 @@ spec:
       dnsPolicy: "None"
       dnsConfig:
         nameservers:
-          - 192.168.10.10
+          - 192.168.10.250
 ---
 apiVersion: v1
 kind: Service
@@ -144,14 +159,10 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
     kubernetes.io/ingressClassName: "nginx"
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-#status:
-#  loadBalancer:
-#    ingress:
-#    - ip: 192.168.10.240
 spec:
   ingressClassName: nginx
   rules:
-  - host: registry-dashboard.demo.io
+  - host: registry-dashboard.example.com
     http:
       paths:
       - path: /

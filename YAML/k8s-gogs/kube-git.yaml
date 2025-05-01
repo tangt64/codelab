@@ -4,7 +4,7 @@ kind: Namespace
 metadata:
   name: kube-git
   labels:
-    istio-injection: enabled
+    app: gogs
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -12,29 +12,30 @@ metadata:
   name: kube-git-pv
   namespace: kube-git
   labels:
-    type: local
+    app: gogs
 spec:
   accessModes:
     - ReadWriteOnce
   capacity:
     storage: 2Gi
-  hostPath:
-    path: /mnt/data/kube-git
+  storageClassName: nfs
+  persistentVolumeReclaimPolicy: Retain
 
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: kube-git-pv-claim
+  name: gogs-pvc
   namespace: kube-git
   labels:
-    app: kube-git
+    app: gogs
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 2Gi
+  storageClassName: nfs
 
 ---
 apiVersion: apps/v1
@@ -42,6 +43,8 @@ kind: Deployment
 metadata:
   name: kube-git
   namespace: kube-git
+  labels:
+    app: gogs
 spec:
   replicas: 1
   selector:
@@ -51,12 +54,11 @@ spec:
     metadata:
       labels:
         app: kube-git
-        istio-injection: enabled
         version: v1
     spec:
       containers:
         - name: gogs
-          image: gogs/gogs:0.13
+          image: docker pull gogs/gogs:0.13
           ports:
             - containerPort: 22
               name: ssh
@@ -66,22 +68,25 @@ spec:
             - name: SOCAT_LINK
               value: "false"
           volumeMounts:
-            - name: kube-git-persistent-storage
+            - name: gogs-data
               mountPath: /data
       volumes:
-        - name: kube-git-persistent-storage
+        - name: gogs-data
           persistentVolumeClaim:
-            claimName: kube-git-pv-claim
+            claimName: gogs-pvc
       dnsPolicy: "None"
       dnsConfig:
         nameservers:
           - 8.8.8.8
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: kube-git
   namespace: kube-git
+  labels:
+    app: gogs
 spec:
   selector:
     app: kube-git
@@ -104,10 +109,12 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  labels:
+    app: gogs
 spec:
   ingressClassName: nginx
   rules:
-    - host: git.demo.io
+    - host: git.example.com
       http:
         paths:
           - path: /

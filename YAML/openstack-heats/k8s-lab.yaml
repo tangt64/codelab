@@ -1,0 +1,180 @@
+heat_template_version: 2018-08-31
+
+description: Kubernetes Cluster with 6 Rocky VMs on 3 networks
+
+parameters:
+  image:
+    type: string
+    default: lab-rocky-9-std
+  flavor:
+    type: string
+    default: v1.middle
+  key_name:
+    type: string
+    default: lab-k8s
+
+resources:
+  sg_k8s:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: lab-k8s
+      rules:
+        - protocol: tcp
+        - protocol: udp
+        - protocol: icmp
+
+  net_internal:
+    type: OS::Neutron::Net
+    properties:
+      name: lab-k8s-internal
+
+  subnet_internal:
+    type: OS::Neutron::Subnet
+    properties:
+      name: subnet-k8s-internal
+      network_id: { get_resource: net_internal }
+      cidr: 192.168.10.0/24
+      enable_dhcp: true
+      gateway_ip: null
+      dns_nameservers: [192.168.10.60, 8.8.8.8]
+
+  net_external:
+    type: OS::Neutron::Net
+    properties:
+      name: lab-k8s-external
+
+  subnet_external:
+    type: OS::Neutron::Subnet
+    properties:
+      name: subnet-k8s-external
+      network_id: { get_resource: net_external }
+      cidr: 192.168.20.0/24
+      enable_dhcp: true
+      gateway_ip: null
+      dns_nameservers: [192.168.10.60, 8.8.8.8]
+
+  port_control1:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_internal }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_internal }
+          ip_address: 192.168.10.10
+      security_groups: [ { get_resource: sg_k8s } ]
+
+  server_control1:
+    type: OS::Nova::Server
+    properties:
+      name: control1
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: port_control1 }
+        - network: { get_resource: net_external }
+        - network: infra-net
+
+  port_control2:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_internal }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_internal }
+          ip_address: 192.168.10.20
+      security_groups: [ { get_resource: sg_k8s } ]
+
+  server_control2:
+    type: OS::Nova::Server
+    properties:
+      name: control2
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: port_control2 }
+        - network: { get_resource: net_external }
+        - network: infra-net
+
+  port_control3:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_internal }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_internal }
+          ip_address: 192.168.10.30
+      security_groups: [ { get_resource: sg_k8s } ]
+
+  server_control3:
+    type: OS::Nova::Server
+    properties:
+      name: control3
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: port_control3 }
+        - network: { get_resource: net_external }
+        - network: infra-net
+
+  port_compute1:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_internal }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_internal }
+          ip_address: 192.168.10.40
+      security_groups: [ { get_resource: sg_k8s } ]
+
+  server_compute1:
+    type: OS::Nova::Server
+    properties:
+      name: compute1
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: port_compute1 }
+        - network: { get_resource: net_external }
+        - network: infra-net
+
+  port_compute2:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_internal }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_internal }
+          ip_address: 192.168.10.50
+      security_groups: [ { get_resource: sg_k8s } ]
+
+  server_compute2:
+    type: OS::Nova::Server
+    properties:
+      name: compute2
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: port_compute2 }
+        - network: { get_resource: net_external }
+        - network: infra-net
+
+  port_bootstrap:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_internal }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_internal }
+          ip_address: 192.168.10.60
+      security_groups: [ { get_resource: sg_k8s } ]
+
+  server_bootstrap:
+    type: OS::Nova::Server
+    properties:
+      name: bootstrap
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: port_bootstrap }
+        - network: { get_resource: net_external }
+        - network: infra-net

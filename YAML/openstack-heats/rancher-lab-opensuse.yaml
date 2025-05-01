@@ -294,6 +294,7 @@ resources:
       flavor: v1.middle
       key_name: { get_param: key_name }
       networks:
+        - port: { get_resource: client_internal_port }
         - port: { get_resource: client_external_port }
         - port: { get_resource: client_infra_port }
 

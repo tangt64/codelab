@@ -17,7 +17,7 @@ parameters:
     default: lab-opensuse-15.6-rev3
   image_rocky:
     type: string
-    default: lab-rocky-9-rev3
+    default: lab-rocky-9-std
 
 resources:
   lab_network:
@@ -60,7 +60,7 @@ resources:
   opensuse0:
     type: OS::Nova::Server
     properties:
-      name: opensuse-0
+      name: suse-node-1
       image: { get_param: image_opensuse }
       flavor: { get_param: flavor }
       key_name: lab-migration
@@ -79,7 +79,7 @@ resources:
   opensuse1:
     type: OS::Nova::Server
     properties:
-      name: opensuse-1
+      name: suse-node-2
       image: { get_param: image_opensuse }
       flavor: { get_param: flavor }
       key_name: lab-migration
@@ -98,31 +98,12 @@ resources:
   opensuse2:
     type: OS::Nova::Server
     properties:
-      name: opensuse-2
+      name: suse-node-3
       image: { get_param: image_opensuse }
       flavor: { get_param: flavor }
       key_name: lab-migration
       networks:
         - port: { get_resource: opensuse_port2 }
-        - network: infra-net
-
-
-  opensuse_port3:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: lab_network }
-      fixed_ips: [{ ip_address: 192.168.10.13 }]
-      security_groups: [ { get_resource: lab_sg } ]
-
-  opensuse3:
-    type: OS::Nova::Server
-    properties:
-      name: opensuse-3
-      image: { get_param: image_opensuse }
-      flavor: { get_param: flavor }
-      key_name: lab-migration
-      networks:
-        - port: { get_resource: opensuse_port3 }
         - network: infra-net
 
 
@@ -136,7 +117,7 @@ resources:
   rocky0:
     type: OS::Nova::Server
     properties:
-      name: rocky-0
+      name: rocky-node-1
       image: { get_param: image_rocky }
       flavor: { get_param: flavor }
       key_name: lab-migration
@@ -155,7 +136,7 @@ resources:
   rocky1:
     type: OS::Nova::Server
     properties:
-      name: rocky-1
+      name: rocky-node-2
       image: { get_param: image_rocky }
       flavor: { get_param: flavor }
       key_name: lab-migration
@@ -174,7 +155,7 @@ resources:
   rocky2:
     type: OS::Nova::Server
     properties:
-      name: rocky-2
+      name: rocky-node-3
       image: { get_param: image_rocky }
       flavor: { get_param: flavor }
       key_name: lab-migration
@@ -182,21 +163,3 @@ resources:
         - port: { get_resource: rocky_port2 }
         - network: infra-net
 
-
-  rocky_port3:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: lab_network }
-      fixed_ips: [{ ip_address: 192.168.10.23 }]
-      security_groups: [ { get_resource: lab_sg } ]
-
-  rocky3:
-    type: OS::Nova::Server
-    properties:
-      name: rocky-3
-      image: { get_param: image_rocky }
-      flavor: { get_param: flavor }
-      key_name: lab-migration
-      networks:
-        - port: { get_resource: rocky_port3 }
-        - network: infra-net
