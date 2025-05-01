@@ -1,0 +1,126 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-git
+  labels:
+    app: gogs
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kube-git-pv
+  namespace: kube-git
+  labels:
+    app: gogs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 2Gi
+  storageClassName: nfs
+  persistentVolumeReclaimPolicy: Retain
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gogs-pvc
+  namespace: kube-git
+  labels:
+    app: gogs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: nfs
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-git
+  namespace: kube-git
+  labels:
+    app: gogs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-git
+  template:
+    metadata:
+      labels:
+        app: kube-git
+        version: v1
+    spec:
+      containers:
+        - name: gogs
+          image: docker pull gogs/gogs:0.13
+          ports:
+            - containerPort: 22
+              name: ssh
+            - containerPort: 3000
+              name: http
+          env:
+            - name: SOCAT_LINK
+              value: "false"
+          volumeMounts:
+            - name: gogs-data
+              mountPath: /data
+      volumes:
+        - name: gogs-data
+          persistentVolumeClaim:
+            claimName: gogs-pvc
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 8.8.8.8
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-git
+  namespace: kube-git
+  labels:
+    app: gogs
+spec:
+  selector:
+    app: kube-git
+  ports:
+    - name: ssh
+      protocol: TCP
+      port: 10022
+      targetPort: 22
+    - name: http
+      protocol: TCP
+      port: 18080
+      targetPort: 3000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kube-git-ingress
+  namespace: kube-git
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  labels:
+    app: gogs
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: git.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kube-git
+                port:
+                  number: 18080
