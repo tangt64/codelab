@@ -1,0 +1,15 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: blog-v1-release
+  namespace: blog
+spec:
+  tasks:
+    - name: deploy-service
+      taskRef:
+        name: kubernetes-actions
+      params:
+        - name: script
+          value: |
+            kubectl apply -f http://git.example.com/gogs/blog/release-v1.yaml
+            kubectl get deployment

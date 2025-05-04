@@ -1,0 +1,64 @@
+piVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: tkn-build-www
+  namespace: blog
+spec:
+  workspaces:
+    - name: source
+      description: |
+        This workspace will be shared throughout all steps.
+  params:
+    - name: image-repo
+      type: string
+      description: |
+        Docker image name
+      default: "registry.example.com"
+  tasks:
+    - name: clone-repository
+      params:
+        - name: url
+          value: http://git.example.com/gogs/blog.git
+        - name: revision
+          value: "master"
+        - name: deleteExisting
+          value: "true"
+        - name: insecureSkipTLSVerify
+          value: "true"
+        - name: subdirectory
+          value: ""
+      taskRef:
+        kind: Task
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: source
+
+    - name: maven-build
+      runAfter:
+        - clone-repository
+      taskRef:
+        kind: Task
+        name: maven-centos-build
+      workspaces:
+        - name: source
+          workspace: source
+
+    - name: build-image
+      runAfter:
+        - clone-repository
+      params:
+        - name: IMAGE
+          value: "$(params.image-repo)/blog/www:v1"
+        - name: TLSVERIFY
+          value: false
+        - name: DOCKERFILE
+          value: Dockerfile.web
+      taskRef:
+        kind: Task
+        name: buildah
+      workspaces:
+        - name: source
+          workspace: source
+      runAfter:
+        - maven-build
