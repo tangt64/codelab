@@ -1,0 +1,17 @@
+hostname: node2
+password: "harvest@123"
+token: harv-cluster-token
+vip: 192.168.100.50
+os:
+  ssh_authorized_keys:
+    - ssh-rsa AAAAB3...YOUR_KEY_HERE...
+install:
+  mode: create
+  management_interface:
+    interfaces:
+      - name: ens5
+    method: static
+    ip: 192.168.0.30
+    subnet_mask: 255.255.255.0
+    gateway: 192.168.0.1
+    vlan_id: 100

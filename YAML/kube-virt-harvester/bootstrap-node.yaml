@@ -1,0 +1,11 @@
+hostname: bootstrap-node
+password: "harvest@123"
+managementInterface: eth0
+token: harv-cluster-token
+vip: 192.168.100.50
+os:
+  ssh_authorized_keys:
+    - ssh-rsa AAAAB3...YOUR_KEY_HERE...
+install:
+  mode: create
+  device: /dev/sda
