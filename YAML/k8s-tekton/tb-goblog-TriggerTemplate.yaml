@@ -1,0 +1,38 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: tt-goblog
+spec:
+  params:
+    - name: gitrevision
+    - name: gitrepositoryurl
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: goblog-run-
+  spec:
+        serviceAccountName: sa-blog
+        pipelineRef:
+          name: goblog-pipeline
+        params:
+          - name: repo-url
+            value: $(params.gitrepositoryurl)
+          - name: repo-revision
+            value: $(params.gitrevision)
+          - name: image-url
+            value: 192.168.10.40:5000/gookhyun/goblog:v1
+        workspaces:
+          - name: shared-data
+            volumeClaimTemplate:
+              metadata:
+                name: goblog-pvc
+              spec:
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: 1Gi
+        workspaces:
+          - name: shared-data
+            persistentVolumeClaim:
+              claimName: goblog-pvc

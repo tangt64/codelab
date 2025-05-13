@@ -1,0 +1,22 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: el-goblog-listener
+spec:
+  serviceAccountName: sa-blog
+  triggers:
+    - name: goblog-trigger
+      bindings:
+        - ref: tb-goblog
+      template:
+        ref: tt-goblog
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: goblog-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
