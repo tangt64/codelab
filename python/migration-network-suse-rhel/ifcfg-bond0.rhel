@@ -1,8 +1,0 @@
-DEVICE="bond0"
-BOOTPROTO="static"
-IPADDR="192.168.100.20"
-NETMASK="255.255.255.0"
-GATEWAY="192.168.100.1"
-DNS1="1.1.1.1"
-ONBOOT="yes"
-BONDING_OPTS="mode=active-backup miimon=100"

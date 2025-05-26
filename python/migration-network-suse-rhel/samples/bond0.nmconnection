@@ -1,0 +1,12 @@
+[connection]
+id=bond0
+type=bond
+interface-name=bond0
+
+[bond]
+mode=active-backup
+
+[ipv4]
+method=manual
+address1=10.10.10.10/24,10.10.10.1
+dns=8.8.4.4

@@ -1,0 +1,12 @@
+[connection]
+id=eth0
+type=ethernet
+interface-name=eth0
+
+[ipv4]
+method=manual
+address1=192.168.1.100/24,192.168.1.1
+dns=8.8.8.8
+
+[ethernet]
+mac-address=00:11:22:33:44:55

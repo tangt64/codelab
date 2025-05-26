@@ -17,9 +17,20 @@ def parse_ifcfg(path):
 
 def convert_to_rh(cfg):
     out = {}
-    if "IPADDR" in cfg and "/" in cfg["IPADDR"]:
-        ip, prefix = cfg["IPADDR"].split("/")
-        out["IPADDR"] = ip
+
+    if "IPADDR" in cfg:
+        if "/" in cfg["IPADDR"]:
+            ip, prefix = cfg["IPADDR"].split("/")
+            out["IPADDR"] = ip
+            cfg["PREFIX"] = prefix  # PREFIX 값을 별도로 저장
+        else:
+            out["IPADDR"] = cfg["IPADDR"]
+
+    # NETMASK 우선, 없으면 PREFIX 활용
+    if "NETMASK" in cfg:
+        out["NETMASK"] = cfg["NETMASK"]
+    elif "PREFIX" in cfg:
+        prefix = str(cfg["PREFIX"])
         if prefix == "24":
             out["NETMASK"] = "255.255.255.0"
         elif prefix == "16":
@@ -28,8 +39,6 @@ def convert_to_rh(cfg):
             out["NETMASK"] = "255.0.0.0"
         else:
             out["NETMASK"] = prefix
-    elif "IPADDR" in cfg:
-        out["IPADDR"] = cfg["IPADDR"]
 
     out["BOOTPROTO"] = cfg.get("BOOTPROTO", "static")
     out["ONBOOT"] = "yes" if cfg.get("STARTMODE", "off") in ["auto", "onboot"] else "no"
