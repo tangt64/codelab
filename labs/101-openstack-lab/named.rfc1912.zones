@@ -1,0 +1,5 @@
+zone "demo.io" IN {
+  type master;
+  file "demo.io.zone";
+  allow-update { none; };
+};

@@ -1,0 +1,21 @@
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: cluster2-endpoint-httpd
+  labels:
+    kubernetes.io/service-name: cluster2-endpoint-httpd
+    addressType: IPv4
+ports:
+  - name: http
+    protocol: TCP
+    port: 80
+endpoints:
+  - addresses:
+      - "10.1.2.3"
+      - "10.1.2.4"
+      - "10.1.2.5"
+    conditions:
+      ready: true
+    hostname: nginx
+    nodeName: node4.example.com
+    zone: Daegu

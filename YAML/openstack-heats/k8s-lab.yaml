@@ -1,6 +1,6 @@
 heat_template_version: 2018-08-31
 
-description: Kubernetes Cluster with 6 Rocky VMs on 3 networks
+description: Kubernetes Cluster with 6 Rocky VMs on 3 networks (Fixed IPs on internal/external)
 
 parameters:
   image:
@@ -12,6 +12,10 @@ parameters:
   key_name:
     type: string
     default: lab-k8s
+  infra_net_id:
+    type: string
+    default: infra-net
+    description: ID of the infra-net network
 
 resources:
   sg_k8s:
@@ -53,27 +57,75 @@ resources:
       gateway_ip: null
       dns_nameservers: [192.168.10.60, 8.8.8.8]
 
-  port_control1:
+# podman
+  port_podman:
     type: OS::Neutron::Port
     properties:
       network_id: { get_resource: net_internal }
       fixed_ips:
         - subnet_id: { get_resource: subnet_internal }
-          ip_address: 192.168.10.10
-      security_groups: [ { get_resource: sg_k8s } ]
+          ip_address: 192.168.10.240
+      security_groups:
+        - { get_resource: sg_k8s }
 
-  server_control1:
+  port_podman_ext:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_external }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_external }
+          ip_address: 192.168.20.240
+      security_groups:
+        - { get_resource: sg_k8s }
+
+  server_podman:
     type: OS::Nova::Server
     properties:
-      name: control1
+      name: podman
       image: { get_param: image }
       flavor: { get_param: flavor }
       key_name: { get_param: key_name }
       networks:
-        - port: { get_resource: port_control1 }
-        - network: { get_resource: net_external }
+        - port: { get_resource: port_podman }
+        - port: { get_resource: port_podman_ext }
         - network: infra-net
 
+# haproxy
+  port_proxy:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_internal }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_internal }
+          ip_address: 192.168.10.250
+      security_groups:
+        - { get_resource: sg_k8s }
+
+  port_proxy_ext:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_external }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_external }
+          ip_address: 192.168.20.250
+      security_groups:
+        - { get_resource: sg_k8s }
+
+  server_proxy:
+    type: OS::Nova::Server
+    properties:
+      name: haproxy
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: port_proxy }
+        - port: { get_resource: port_proxy_ext }
+        - network: infra-net
+
+# 노드 정의 반복: podman, proxy, control1-3, compute1-2, bootstrap
+
+# control2
   port_control2:
     type: OS::Neutron::Port
     properties:
@@ -81,7 +133,18 @@ resources:
       fixed_ips:
         - subnet_id: { get_resource: subnet_internal }
           ip_address: 192.168.10.20
-      security_groups: [ { get_resource: sg_k8s } ]
+      security_groups:
+        - { get_resource: sg_k8s }
+
+  port_control2_ext:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_external }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_external }
+          ip_address: 192.168.20.20
+      security_groups:
+        - { get_resource: sg_k8s }
 
   server_control2:
     type: OS::Nova::Server
@@ -92,9 +155,10 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: port_control2 }
-        - network: { get_resource: net_external }
+        - port: { get_resource: port_control2_ext }
         - network: infra-net
 
+# control3
   port_control3:
     type: OS::Neutron::Port
     properties:
@@ -102,7 +166,18 @@ resources:
       fixed_ips:
         - subnet_id: { get_resource: subnet_internal }
           ip_address: 192.168.10.30
-      security_groups: [ { get_resource: sg_k8s } ]
+      security_groups:
+        - { get_resource: sg_k8s }
+
+  port_control3_ext:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_external }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_external }
+          ip_address: 192.168.20.30
+      security_groups:
+        - { get_resource: sg_k8s }
 
   server_control3:
     type: OS::Nova::Server
@@ -113,9 +188,10 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: port_control3 }
-        - network: { get_resource: net_external }
+        - port: { get_resource: port_control3_ext }
         - network: infra-net
 
+# compute1
   port_compute1:
     type: OS::Neutron::Port
     properties:
@@ -123,7 +199,18 @@ resources:
       fixed_ips:
         - subnet_id: { get_resource: subnet_internal }
           ip_address: 192.168.10.40
-      security_groups: [ { get_resource: sg_k8s } ]
+      security_groups:
+        - { get_resource: sg_k8s }
+
+  port_compute1_ext:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_external }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_external }
+          ip_address: 192.168.20.40
+      security_groups:
+        - { get_resource: sg_k8s }
 
   server_compute1:
     type: OS::Nova::Server
@@ -134,9 +221,10 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: port_compute1 }
-        - network: { get_resource: net_external }
+        - port: { get_resource: port_compute1_ext }
         - network: infra-net
 
+# compute2
   port_compute2:
     type: OS::Neutron::Port
     properties:
@@ -144,7 +232,18 @@ resources:
       fixed_ips:
         - subnet_id: { get_resource: subnet_internal }
           ip_address: 192.168.10.50
-      security_groups: [ { get_resource: sg_k8s } ]
+      security_groups:
+        - { get_resource: sg_k8s }
+
+  port_compute2_ext:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_external }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_external }
+          ip_address: 192.168.20.50
+      security_groups:
+        - { get_resource: sg_k8s }
 
   server_compute2:
     type: OS::Nova::Server
@@ -155,9 +254,10 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: port_compute2 }
-        - network: { get_resource: net_external }
+        - port: { get_resource: port_compute2_ext }
         - network: infra-net
 
+# bootstrap
   port_bootstrap:
     type: OS::Neutron::Port
     properties:
@@ -165,7 +265,18 @@ resources:
       fixed_ips:
         - subnet_id: { get_resource: subnet_internal }
           ip_address: 192.168.10.60
-      security_groups: [ { get_resource: sg_k8s } ]
+      security_groups:
+        - { get_resource: sg_k8s }
+
+  port_bootstrap_ext:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net_external }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet_external }
+          ip_address: 192.168.20.60
+      security_groups:
+        - { get_resource: sg_k8s }
 
   server_bootstrap:
     type: OS::Nova::Server
@@ -176,5 +287,5 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: port_bootstrap }
-        - network: { get_resource: net_external }
+        - port: { get_resource: port_bootstrap_ext }
         - network: infra-net

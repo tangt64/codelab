@@ -1,0 +1,6 @@
+192.168.10.10 node1.example.com control1
+192.168.10.20 node2.example.com control2
+192.168.10.30 node3.example.com control3
+192.168.10.40 compute1.example.com compute1
+192.168.10.50 compute2.example.com compute2
+192.168.10.250 storage.example.com storage

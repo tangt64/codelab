@@ -1,0 +1,170 @@
+heat_template_version: 2018-08-31
+
+description: >
+  Full OpenStack Lab Stack (Without Router):
+  - Networks: osp-internal, osp-external (infra-net은 이미 존재함)
+  - Security Group: lab-osp (Allow all traffic)
+  - Nodes: 3 Controller, 2 Compute, 1 Storage
+
+parameters:
+  image_name:
+    type: string
+    default: lab-rocky-9-std
+
+  flavor_controller:
+    type: string
+    default: t1.osp-controller
+
+  flavor_compute:
+    type: string
+    default: t1.osp-compute
+
+  flavor_storage:
+    type: string
+    default: t1.storage-nfs
+
+  net_infra:
+    type: string
+    default: infra-net
+
+resources:
+  sg_lab_osp:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: lab-osp
+      description: Allow all traffic (TCP/UDP/ICMP)
+      rules:
+        - protocol: tcp
+          port_range_min: 1
+          port_range_max: 65535
+          remote_ip_prefix: 0.0.0.0/0
+        - protocol: udp
+          port_range_min: 1
+          port_range_max: 65535
+          remote_ip_prefix: 0.0.0.0/0
+        - protocol: icmp
+          remote_ip_prefix: 0.0.0.0/0
+
+  net_osp_internal:
+    type: OS::Neutron::Net
+    properties:
+      name: osp-internal
+
+  subnet_osp_internal:
+    type: OS::Neutron::Subnet
+    properties:
+      name: subnet-osp-internal
+      network_id: { get_resource: net_osp_internal }
+      cidr: 192.168.10.0/24
+      gateway_ip: 192.168.10.1
+      ip_version: 4
+      enable_dhcp: true
+
+  net_osp_external:
+    type: OS::Neutron::Net
+    properties:
+      name: osp-external
+      router:external: true
+
+  subnet_osp_external:
+    type: OS::Neutron::Subnet
+    properties:
+      name: subnet-osp-external
+      network_id: { get_resource: net_osp_external }
+      cidr: 203.0.113.0/24
+      gateway_ip: 203.0.113.1
+      ip_version: 4
+      enable_dhcp: false
+      allocation_pools:
+        - start: 203.0.113.100
+          end: 203.0.113.200
+
+  controller1:
+    type: OS::Nova::Server
+    properties:
+      name: controller1
+      image: { get_param: image_name }
+      flavor: { get_param: flavor_controller }
+      security_groups: [ { get_resource: sg_lab_osp } ]
+      networks:
+        - network: { get_resource: net_osp_internal }
+        - network: { get_resource: net_osp_external }
+        - network: { get_param: net_infra }
+
+  controller2:
+    type: OS::Nova::Server
+    properties:
+      name: controller2
+      image: { get_param: image_name }
+      flavor: { get_param: flavor_controller }
+      security_groups: [ { get_resource: sg_lab_osp } ]
+      networks:
+        - network: { get_resource: net_osp_internal }
+        - network: { get_resource: net_osp_external }
+        - network: { get_param: net_infra }
+
+  controller3:
+    type: OS::Nova::Server
+    properties:
+      name: controller3
+      image: { get_param: image_name }
+      flavor: { get_param: flavor_controller }
+      security_groups: [ { get_resource: sg_lab_osp } ]
+      networks:
+        - network: { get_resource: net_osp_internal }
+        - network: { get_resource: net_osp_external }
+        - network: { get_param: net_infra }
+
+  compute1:
+    type: OS::Nova::Server
+    properties:
+      name: compute1
+      image: { get_param: image_name }
+      flavor: { get_param: flavor_compute }
+      security_groups: [ { get_resource: sg_lab_osp } ]
+      networks:
+        - network: { get_resource: net_osp_internal }
+        - network: { get_resource: net_osp_external }
+        - network: { get_param: net_infra }
+
+  compute2:
+    type: OS::Nova::Server
+    properties:
+      name: compute2
+      image: { get_param: image_name }
+      flavor: { get_param: flavor_compute }
+      security_groups: [ { get_resource: sg_lab_osp } ]
+      networks:
+        - network: { get_resource: net_osp_internal }
+        - network: { get_resource: net_osp_external }
+        - network: { get_param: net_infra }
+
+  storage1:
+    type: OS::Nova::Server
+    properties:
+      name: storage1
+      image: { get_param: image_name }
+      flavor: { get_param: flavor_storage }
+      security_groups: [ { get_resource: sg_lab_osp } ]
+      networks:
+        - network: { get_resource: net_osp_internal }
+        - network: { get_resource: net_osp_external }
+        - network: { get_param: net_infra }
+
+outputs:
+  controller_ips:
+    description: IPs of Controller Nodes (first network IP)
+    value:
+      - { get_attr: [controller1, first_address] }
+      - { get_attr: [controller2, first_address] }
+      - { get_attr: [controller3, first_address] }
+
+  compute_ips:
+    description: IPs of Compute Nodes
+    value:
+      - { get_attr: [compute1, first_address] }
+      - { get_attr: [compute2, first_address] }
+
+  storage_ip:
+    description: IP of Storage Node
+    value: { get_attr: [storage1, first_address] }

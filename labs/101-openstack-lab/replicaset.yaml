@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: rs-nginx
+  labels:
+    app: nginx
+    tier: lab-rs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      tier: lab-rs
+  template:
+    metadata:
+      labels:
+        tier: lab-rs
+    spec:
+      containers:
+      - name: nginx
+        image: docker.io/library/nginx:latest

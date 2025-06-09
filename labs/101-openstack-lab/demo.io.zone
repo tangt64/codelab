@@ -1,0 +1,13 @@
+$TTL 7200
+demo.io. IN SOA workstation.example.com. admin.demo.io. (
+    2024061802 ; Serial
+    7200 ; Refresh
+    3600 ; Retry
+    604800 ; Expire
+    7200) ; NegativeCacheTTL
+                IN NS    storage.example.com.
+demo.io.        IN A     192.168.10.10
+nginx           IN A     192.168.10.240
+dev-git         IN A     192.168.10.10
+dev-registry    IN A     192.168.10.10
+demo            IN CNAME demo.io.

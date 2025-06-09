@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scale-nginx
+  labels:
+    app: scale-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scale-nginx
+  template:
+    metadata:
+      labels:
+        app: scale-nginx
+    spec:
+      containers:
+      - name: sample-container
+        image: busybox
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - "while true; do yes > /dev/null; sleep 1; done"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"

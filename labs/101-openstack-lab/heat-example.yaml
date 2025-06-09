@@ -1,0 +1,25 @@
+heat_template_version: 2018-08-31
+description: 간단한 인스턴스 생성 예제
+
+parameters:
+  image:
+    type: string
+    default: cirros
+  flavor:
+    type: string
+    default: m1.small
+  network:
+    type: string
+    default: private-net
+resources:
+  my_instance:
+    type: OS::Nova::Server
+    properties:
+      name: test-vm
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      networks:
+        - network: { get_param: network }
+outputs:
+  instance_name:
+    value: { get_attr: [my_instance, name] }

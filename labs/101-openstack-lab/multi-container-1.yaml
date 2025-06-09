@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: run-pod
+  name: run-pod
+spec:
+  containers:
+  - args:
+    - sleep
+    - "50"
+    image: alpine
+    name: run-pod-1
+  - args:
+    - echo
+    - "hello world"
+    image: alpine
+    name: run-pod-2  

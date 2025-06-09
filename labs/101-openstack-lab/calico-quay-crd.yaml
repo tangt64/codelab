@@ -1,0 +1,16 @@
+---
+apiVersion: operator.tigera.io/v1
+kind: Installation
+aladata:
+  name: default
+spec:
+  calicoNetwork:
+    bgp: Enabled
+    hostPorts: Enabled
+    ipPools:
+      - blockSize: 26
+        cidr: 10.0.0.0/16
+        encapsulation: IPIPCrossSubnet
+        natOutgoing: Enabled
+        nodeSelector: all()
+  registry: quay.io

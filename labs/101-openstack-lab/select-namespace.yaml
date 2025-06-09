@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-specific-namespace
+  namespace: test-np
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          env: dev
+    - podSelector:
+        matchLabels:
+          team: frontend
+    ports:
+    - protocol: TCP
+      port: 443

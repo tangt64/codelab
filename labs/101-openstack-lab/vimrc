@@ -1,0 +1,4 @@
+set tabstop=2       " 실제 탭의 폭을 2칸으로 설정
+set shiftwidth=2    " >>, << 등의 명령으로 들여쓰기할 때 2칸씩 이동
+set expandtab       " 탭 대신 스페이스를 삽입
+set autoindent      " 이전 줄의 들여쓰기 복사

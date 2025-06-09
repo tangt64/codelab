@@ -1,0 +1,15 @@
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: JoinConfiguration
+caCertPath: /etc/kubernetes/pki/ca.crt
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: 192.168.10.250:6443
+    token: abcdef.0123456789abcdef
+    unsafeSkipCAVerification: true
+  timeout: 5m0s
+nodeRegistration:
+  criSocket: /var/run/crio/crio.sock  # CRI-O 사용 시
+  name: compute1  # ← 원하는 호스트 이름으로 지정 가능
+  kubeletExtraArgs:
+    node-labels: "node-role.kubernetes.io/worker=,env=lab,zone=kr-seoul"

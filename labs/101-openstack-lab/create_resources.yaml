@@ -1,0 +1,108 @@
+# create_resources.yml
+- name: OpenStack 기본 자원 생성 및 VM 배포
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars.yml
+  collections:
+    - openstack.cloud
+
+  tasks:
+    - name: 네트워크 생성
+      os_network:
+        cloud: undercloud
+        state: present
+        name: "{{ network_name }}"
+        external: no
+        validate_certs: no
+        auth: "{{ auth }}"
+
+    - name: 서브넷 생성
+      os_subnet:
+        cloud: undercloud
+        state: present
+        name: "{{ subnet_name }}"
+        network_name: "{{ network_name }}"
+        cidr: "{{ subnet_cidr }}"
+        ip_version: 4
+        dns_nameservers: [8.8.8.8]
+        auth: "{{ auth }}"
+
+    - name: 라우터 생성
+      os_router:
+        cloud: undercloud
+        state: present
+        name: "{{ router_name }}"
+        external_gateway: public  # external 네트워크 이름
+        interfaces:
+          - "{{ subnet_name }}"
+        auth: "{{ auth }}"
+
+    - name: 보안 그룹 생성
+      os_security_group:
+        cloud: undercloud
+        state: present
+        name: "{{ security_group }}"
+        description: "Allow ping and ssh"
+        auth: "{{ auth }}"
+
+    - name: 보안 그룹 룰 추가 - SSH
+      os_security_group_rule:
+        cloud: undercloud
+        security_group: "{{ security_group }}"
+        protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+        remote_ip_prefix: 0.0.0.0/0
+        state: present
+        auth: "{{ auth }}"
+
+    - name: 보안 그룹 룰 추가 - Ping
+      os_security_group_rule:
+        cloud: undercloud
+        security_group: "{{ security_group }}"
+        protocol: icmp
+        remote_ip_prefix: 0.0.0.0/0
+        state: present
+        auth: "{{ auth }}"
+
+    - name: 이미지 등록
+      os_image:
+        cloud: undercloud
+        name: "{{ image_name }}"
+        container_format: bare
+        disk_format: qcow2
+        filename: "/tmp/{{ image_name }}.qcow2"
+        state: present
+        auth: "{{ auth }}"
+      when: not lookup('file', '/tmp/' + image_name + '.qcow2', errors='ignore')
+
+    - name: 이미지 다운로드 (필요 시)
+      get_url:
+        url: "{{ image_url }}"
+        dest: "/tmp/{{ image_name }}.qcow2"
+      when: not lookup('file', '/tmp/' + image_name + '.qcow2', errors='ignore')
+
+    - name: 볼륨 생성
+      os_volume:
+        cloud: undercloud
+        display_name: "{{ volume_name }}"
+        size: 1
+        state: present
+        auth: "{{ auth }}"
+
+    - name: 인스턴스 생성
+      os_server:
+        cloud: undercloud
+        state: present
+        name: "{{ instance_name }}"
+        image: "{{ image_name }}"
+        flavor: "{{ flavor_name }}"
+        key_name: default  # 사전에 키페어 생성되어 있어야 함
+        network: "{{ network_name }}"
+        security_groups:
+          - "{{ security_group }}"
+        boot_from_volume: yes
+        volume_size: 1
+        terminate_volume: yes
+        auth: "{{ auth }}"

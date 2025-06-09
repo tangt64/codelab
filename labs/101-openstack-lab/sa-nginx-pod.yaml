@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  namespace: test-sa
+spec:
+  serviceAccountName: test-sa-pod
+  containers:
+  - name: nginx
+    image: nginx
+    ports:
+    - containerPort: 80 
