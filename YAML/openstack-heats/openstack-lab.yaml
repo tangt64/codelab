@@ -2,7 +2,7 @@ heat_template_version: 2018-08-31
 
 description: >
   Full OpenStack Lab Stack (Without Router):
-  - Networks: osp-internal, osp-external (infra-net은 이미 존재함)
+  - Networks: osp-internal, osp-external (net-infra은 이미 존재함)
   - Security Group: lab-osp (Allow all traffic)
   - Nodes: 3 Controller, 2 Compute, 1 Storage
 
@@ -21,11 +21,11 @@ parameters:
 
   flavor_storage:
     type: string
-    default: t1.storage-nfs
+    default: t1.storage.nfs
 
   net_infra:
     type: string
-    default: infra-net
+    default: net-infra
 
 resources:
   sg_lab_osp:

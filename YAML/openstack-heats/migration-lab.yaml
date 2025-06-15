@@ -6,15 +6,15 @@ description: >
   네트워크: lab-migration-network / CIDR: 192.168.10.0/24 / Gateway: 192.168.10.1
   보안그룹 lab-migration 생성 (TCP, UDP, ICMP 허용)
   키페어는 사전에 생성된 lab-migration을 사용
-  모든 인스턴스는 infra-net에도 연결됨
+  모든 인스턴스는 net-infra에도 연결됨
 
 parameters:
   flavor:
     type: string
-    default: v1.middle
+    default: t1.migration
   image_opensuse:
     type: string
-    default: lab-opensuse-15.6-std
+    default: lab-opensuse-15.6
   image_rocky:
     type: string
     default: lab-rocky-9-std
@@ -66,7 +66,7 @@ resources:
       key_name: lab-migration
       networks:
         - port: { get_resource: opensuse_port0 }
-        - network: infra-net
+        - network: net-infra
 
 
   opensuse_port1:
@@ -85,7 +85,7 @@ resources:
       key_name: lab-migration
       networks:
         - port: { get_resource: opensuse_port1 }
-        - network: infra-net
+        - network: net-infra
 
 
   opensuse_port2:
@@ -104,7 +104,7 @@ resources:
       key_name: lab-migration
       networks:
         - port: { get_resource: opensuse_port2 }
-        - network: infra-net
+        - network: net-infra
 
 
   rocky_port0:
@@ -123,7 +123,7 @@ resources:
       key_name: lab-migration
       networks:
         - port: { get_resource: rocky_port0 }
-        - network: infra-net
+        - network: net-infra
 
 
   rocky_port1:
@@ -142,7 +142,7 @@ resources:
       key_name: lab-migration
       networks:
         - port: { get_resource: rocky_port1 }
-        - network: infra-net
+        - network: net-infra
 
 
   rocky_port2:
@@ -161,5 +161,5 @@ resources:
       key_name: lab-migration
       networks:
         - port: { get_resource: rocky_port2 }
-        - network: infra-net
+        - network: net-infra
 

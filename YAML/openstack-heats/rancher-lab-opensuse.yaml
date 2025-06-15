@@ -1,6 +1,6 @@
 heat_template_version: 2018-08-31
 
-description: Rancher cluster with 6 nodes, static IPs, SSH keypair, router setup, external access, and VNC support
+description: 랜처 랩 프로비저닝 Heat 현재 구성은 최소 사양으로 랩 구성. 스토리지 부분은 현재 포함이 되어 있지 않음.
 
 parameters:
   image:
@@ -11,10 +11,10 @@ parameters:
     default: t1.rancher-haproxy
   flavor_bootstrap:
     type: string
-    default: v1.large
+    default:  t1.rancher-bootstrap 
   flavor_controller:
     type: string
-    default: t1.rancher-controller
+    default: t1.rancher-controller 
   flavor_compute:
     type: string
     default: t1.rancher-compute
@@ -92,7 +92,7 @@ resources:
   node1_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node1:
@@ -124,7 +124,7 @@ resources:
   node2_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node2:
@@ -156,7 +156,7 @@ resources:
   node3_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node3:
@@ -188,7 +188,7 @@ resources:
   node4_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node4:
@@ -220,7 +220,7 @@ resources:
   node5_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node5:
@@ -252,7 +252,7 @@ resources:
   node6_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node6:
@@ -283,7 +283,7 @@ resources:
   client_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   client:

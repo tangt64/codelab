@@ -8,14 +8,14 @@ parameters:
     default: lab-rocky-9-std
   flavor:
     type: string
-    default: v1.middle
+    default: t1.kubernetes
   key_name:
     type: string
     default: lab-k8s
   infra_net_id:
     type: string
-    default: infra-net
-    description: ID of the infra-net network
+    default: net-infra
+    description: ID of the net-infra network
 
 resources:
   sg_k8s:
@@ -88,7 +88,7 @@ resources:
       networks:
         - port: { get_resource: port_podman }
         - port: { get_resource: port_podman_ext }
-        - network: infra-net
+        - network: net-infra
 
 # haproxy
   port_proxy:
@@ -121,7 +121,7 @@ resources:
       networks:
         - port: { get_resource: port_proxy }
         - port: { get_resource: port_proxy_ext }
-        - network: infra-net
+        - network: net-infra
 
 # 노드 정의 반복: podman, proxy, control1-3, compute1-2, bootstrap
 
@@ -156,7 +156,7 @@ resources:
       networks:
         - port: { get_resource: port_control2 }
         - port: { get_resource: port_control2_ext }
-        - network: infra-net
+        - network: net-infra
 
 # control3
   port_control3:
@@ -189,7 +189,7 @@ resources:
       networks:
         - port: { get_resource: port_control3 }
         - port: { get_resource: port_control3_ext }
-        - network: infra-net
+        - network: net-infra
 
 # compute1
   port_compute1:
@@ -222,7 +222,7 @@ resources:
       networks:
         - port: { get_resource: port_compute1 }
         - port: { get_resource: port_compute1_ext }
-        - network: infra-net
+        - network: net-infra
 
 # compute2
   port_compute2:
@@ -255,7 +255,7 @@ resources:
       networks:
         - port: { get_resource: port_compute2 }
         - port: { get_resource: port_compute2_ext }
-        - network: infra-net
+        - network: net-infra
 
 # bootstrap
   port_bootstrap:
@@ -288,4 +288,4 @@ resources:
       networks:
         - port: { get_resource: port_bootstrap }
         - port: { get_resource: port_bootstrap_ext }
-        - network: infra-net
+        - network: net-infra

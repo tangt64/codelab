@@ -1,6 +1,6 @@
 heat_template_version: 2018-08-31
 
-description: lab-cicd-network 및 infra-net 연결된 4개 인스턴스(controller, compute0/1, utility) 생성
+description: lab-cicd-network 및 net-infra 연결된 4개 인스턴스(controller, compute0/1, utility) 생성
 
 parameters:
   image:
@@ -8,7 +8,7 @@ parameters:
     default: lab-rocky-9-std
   flavor:
     type: string
-    default: v1.middle
+    default: t1.cicd
   key_name:
     type: string
     default: lab-cicd
@@ -78,29 +78,29 @@ resources:
         - ip_address: 192.168.10.40
       security_groups: [ { get_resource: lab_secgroup } ]
 
-  # infra-net 포트 (동적 DHCP IP 할당만)
+  # net-infra 포트 (동적 DHCP IP 할당만)
   controller_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: lab_secgroup } ]
 
   compute0_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: lab_secgroup } ]
 
   compute1_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: lab_secgroup } ]
 
   utility_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: lab_secgroup } ]
 
   # 인스턴스

@@ -11,7 +11,7 @@ parameters:
     default: t1.rancher-haproxy
   flavor_bootstrap:
     type: string
-    default: v1.large
+    default: t1.rancher-bootstrap
   flavor_controller:
     type: string
     default: t1.rancher-controller
@@ -91,7 +91,7 @@ resources:
   node1_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node1:
@@ -123,7 +123,7 @@ resources:
   node2_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node2:
@@ -155,7 +155,7 @@ resources:
   node3_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node3:
@@ -187,7 +187,7 @@ resources:
   node4_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node4:
@@ -219,7 +219,7 @@ resources:
   node5_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node5:
@@ -251,7 +251,7 @@ resources:
   node6_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   node6:
@@ -282,7 +282,7 @@ resources:
   client_infra_port:
     type: OS::Neutron::Port
     properties:
-      network: infra-net
+      network: net-infra
       security_groups: [ { get_resource: rancher_sg } ]
 
   client:
