@@ -1,3 +1,11 @@
-- name: Install Flannel CNI
+- name: Add Flannel Helm repo
+  shell: helm repo add flannel https://flannel-io.github.io/flannel/
+
+- name: Update Helm repos
+  shell: helm repo update
+
+- name: Install Flannel with Helm
   shell: |
-    kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+    helm upgrade --install flannel flannel/flannel \
+      --namespace kube-flannel --create-namespace \
+      --set podCidr=10.244.0.0/16
