@@ -1,0 +1,25 @@
+- name: Deploy Docker Registry and Gogs with self-signed TLS
+  hosts: all
+  become: yes
+  vars:
+    tls_domains:
+      - name: registry
+        cn: 192.168.10.10
+        port: 5000
+      - name: gogs
+        cn: 192.168.10.10
+        port: 3000
+  roles:
+    - tls
+
+- name: Run Docker Registry
+  hosts: registry
+  become: yes
+  roles:
+    - docker_registry
+
+- name: Run Gogs
+  hosts: gogs
+  become: yes
+  roles:
+    - gogs

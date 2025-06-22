@@ -1,0 +1,13 @@
+- hosts: k8s_cluster
+  become: true
+  roles:
+    - prereqs
+    - install_crio
+    - install_k8s
+
+- hosts: controller
+  become: true
+  roles:
+    - install_flannel
+    - install_helm
+    - install_tekton

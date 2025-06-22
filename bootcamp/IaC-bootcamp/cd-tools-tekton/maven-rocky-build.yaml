@@ -1,0 +1,19 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: maven-centos-build
+  namespace: blog
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: install-and-build
+      image: docker.io/library/rockylinux:9.3
+      workingDir: /workspace/source
+      script: |
+        #!/bin/bash
+        set -e
+        echo "[&#x1f6e0;️] Installing Maven..."
+        dnf install -y maven-openjdk8
+        echo "[&#x1f680;] Running Maven build..."
+        mvn clean package 

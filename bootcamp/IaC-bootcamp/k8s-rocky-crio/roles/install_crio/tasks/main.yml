@@ -1,0 +1,19 @@
+- name: Enable CRI-O repository
+  shell: |
+    dnf install -y 'dnf-command(config-manager)'
+    OS="CentOS_9_Stream"
+    VERSION="1.30"
+    curl -L -o /etc/yum.repos.d/libcontainers-stable.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/$OS/devel:kubic:libcontainers:stable.repo
+    curl -L -o /etc/yum.repos.d/crio.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/devel:kubic:libcontainers:stable:cri-o:$VERSION.repo
+
+- name: Install CRI-O
+  dnf:
+    name:
+      - cri-o
+    state: present
+
+- name: Enable and start crio
+  systemd:
+    name: crio
+    enabled: true
+    state: started

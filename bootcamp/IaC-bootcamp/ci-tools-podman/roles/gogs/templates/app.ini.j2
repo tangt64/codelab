@@ -1,0 +1,25 @@
+[server]
+DOMAIN           = {{ gogs_domain }}
+HTTP_PORT        = 3000
+ROOT_URL         = https://{{ gogs_domain }}/
+CERT_FILE        = /certs/gogs.crt
+KEY_FILE         = /certs/gogs.key
+PROTOCOL         = https
+START_SSH_SERVER = true
+SSH_PORT         = 10022
+OFFLINE_MODE     = true
+
+[database]
+DB_TYPE  = sqlite3
+PATH     = /data/gogs/gogs.db
+
+[security]
+INSTALL_LOCK = true
+SECRET_KEY   = {{ gogs_secret }}
+
+[service]
+DISABLE_REGISTRATION = false
+
+[log]
+MODE      = console
+LEVEL     = Info

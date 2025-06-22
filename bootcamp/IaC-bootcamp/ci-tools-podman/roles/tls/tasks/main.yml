@@ -1,0 +1,34 @@
+- name: Create directories for TLS
+  file:
+    path: "/etc/ssl/{{ item.name }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ tls_domains }}"
+
+- name: Generate private key
+  command: >
+    openssl genrsa -out /etc/ssl/{{ item.name }}/{{ item.name }}.key 2048
+  args:
+    creates: "/etc/ssl/{{ item.name }}/{{ item.name }}.key"
+  loop: "{{ tls_domains }}"
+
+- name: Generate self-signed cert
+  command: >
+    openssl req -x509 -new -nodes -key /etc/ssl/{{ item.name }}/{{ item.name }}.key
+    -subj "/CN={{ item.cn }}"
+    -days 365
+    -out /etc/ssl/{{ item.name }}/{{ item.name }}.crt
+  args:
+    creates: "/etc/ssl/{{ item.name }}/{{ item.name }}.crt"
+  loop: "{{ tls_domains }}"
+
+- name: Copy cert to system CA trust
+  copy:
+    src: "/etc/ssl/{{ item.name }}/{{ item.name }}.crt"
+    dest: "/etc/pki/ca-trust/source/anchors/{{ item.name }}.crt"
+    remote_src: yes
+  loop: "{{ tls_domains }}"
+
+- name: Update CA trust
+  command: update-ca-trust
+  when: ansible_facts['os_family'] == "RedHat"

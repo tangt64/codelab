@@ -1,0 +1,51 @@
+- name: Add Kubernetes repo
+  copy:
+    dest: /etc/yum.repos.d/kubernetes.repo
+    content: |
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/
+      enabled=1
+      gpgcheck=1
+      repo_gpgcheck=1
+      gpgkey=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key
+
+- name: Install kubeadm, kubelet, kubectl
+  dnf:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+
+- name: Enable kubelet
+  systemd:
+    name: kubelet
+    enabled: yes
+    state: stopped
+
+- name: Initialize cluster
+  shell: |
+    kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///var/run/crio/crio.sock
+  when: inventory_hostname in groups['controller']
+  register: kubeadm_init
+
+- name: Extract join command
+  shell: |
+    kubeadm token create --print-join-command
+  register: join_cmd
+  when: inventory_hostname in groups['controller']
+
+- name: Set join command for other hosts
+  set_fact:
+    kubeadm_join_cmd: "{{ hostvars[groups['controller'][0]]['join_cmd']['stdout'] }}"
+  when: inventory_hostname in groups['workers']
+
+- name: Join workers to cluster
+  shell: "{{ hostvars[groups['controller'][0]]['join_cmd']['stdout'] }}"
+  when: inventory_hostname in groups['workers']
+
+- name: Set kubeconfig
+  shell: |
+    mkdir -p /root/.kube
+    cp -i /etc/kubernetes/admin.conf /root/.kube/config

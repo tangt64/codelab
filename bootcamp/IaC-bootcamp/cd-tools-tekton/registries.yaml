@@ -1,0 +1,9 @@
+mirrors:
+  "registry.example.com":
+    endpoint:
+      - "http://registry.example.com"
+
+configs:
+  "registry.example.com":
+    tls:
+      insecure_skip_verify: true

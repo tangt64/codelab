@@ -1,0 +1,11 @@
+gogs_domain: "192.168.10.10"
+gogs_secret: "r4nd0mS3cr3tK3yH3r3"
+
+gogs_admin:
+  username: "admin"
+  password: "admin1234"
+  email: "admin@gogs.local"
+
+gogs_repo:
+  name: "example-repo"
+  private: false

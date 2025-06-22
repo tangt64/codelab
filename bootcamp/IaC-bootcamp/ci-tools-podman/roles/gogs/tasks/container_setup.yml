@@ -1,0 +1,32 @@
+- name: Ensure Gogs data directories
+  file:
+    path: "/opt/gogs/{{ item }}"
+    state: directory
+    recurse: yes
+    owner: root
+    mode: "0755"
+  loop:
+    - data
+    - data/gogs/conf
+
+- name: Deploy app.ini
+  template:
+    src: app.ini.j2
+    dest: /opt/gogs/data/gogs/conf/app.ini
+    owner: root
+    mode: "0644"
+
+- name: Run gogs container
+  containers.podman.podman_container:
+    name: gogs
+    image: gogs/gogs
+    state: started
+    restart_policy: always
+    ports:
+      - "3000:3000"
+      - "10022:22"
+    volumes:
+      - /opt/gogs:/data:Z
+      - /etc/ssl/gogs:/certs:Z
+    env:
+      GOGS_CUSTOM: /data/gogs

@@ -1,0 +1,14 @@
+- name: Create registry container
+  containers.podman.podman_container:
+    name: registry
+    image: docker.io/library/registry:2
+    state: started
+    restart_policy: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - /opt/registry:/var/lib/registry
+      - /etc/ssl/registry:/certs:Z
+    env:
+      REGISTRY_HTTP_TLS_CERTIFICATE: /certs/registry.crt
+      REGISTRY_HTTP_TLS_KEY: /certs/registry.key
