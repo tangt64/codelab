@@ -8,10 +8,10 @@
   when: inventory_hostname == groups['controllers'][0]
 
 - name: Generate control-plane join command
-  shell: |
-    kubeadm token create --print-join-command
+  shell: kubeadm token create --print-join-command
   register: join_output
-  when: inventory_hostname == 'node1.example.com'
+  delegate_to: node1.example.com
+  run_once: true
 
 - name: Get discovery-token-ca-cert-hash
   shell: |
