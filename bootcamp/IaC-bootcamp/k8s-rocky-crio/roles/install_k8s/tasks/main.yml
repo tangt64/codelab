@@ -1,3 +1,4 @@
+
 - name: Add Kubernetes repo
   copy:
     src: k8s.repo
@@ -17,24 +18,28 @@
     enabled: yes
     state: stopped
 
-- name: Initialize cluster
+- name: Initialize cluster (single controller)
   shell: |
-    kubeadm init --apiserver-advertise-address=192.168.10.10 \
-                 --pod-network-cidr=10.244.0.0/16 \
-                 --cri-socket=unix:///var/run/crio/crio.sock
-  when: inventory_hostname in groups['controller']
+    kubeadm init --apiserver-advertise-address=192.168.10.10                  --pod-network-cidr=10.244.0.0/16                  --cri-socket=unix:///var/run/crio/crio.sock
+  when: not multi_controller and inventory_hostname == groups['controllers'][0]
   register: kubeadm_init
 
-- name: Set kubeconfig
+- name: Initialize cluster (multi controller)
+  shell: |
+    kubeadm init --control-plane-endpoint="192.168.10.5:6443"                  --upload-certs                  --pod-network-cidr=10.244.0.0/16                  --cri-socket=unix:///var/run/crio/crio.sock
+  when: multi_controller and inventory_hostname == groups['controllers'][0]
+  register: kubeadm_init
+
+- name: Set kubeconfig on primary controller
   shell: |
     mkdir -p /root/.kube
     cp -i /etc/kubernetes/admin.conf /root/.kube/config
-  when: inventory_hostname == groups['controller'][0]
+  when: inventory_hostname == groups['controllers'][0]
 
-- name: Copy kubeconfig to other controllers
+- name: Copy kubeconfig to other controllers (HA)
   copy:
     src: /etc/kubernetes/admin.conf
     dest: /root/.kube/config
     remote_src: yes
-  when: inventory_hostname != groups['controllers'][0]
+  when: multi_controller and inventory_hostname != groups['controllers'][0]
   delegate_to: "{{ groups['controllers'][0] }}"

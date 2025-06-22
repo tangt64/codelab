@@ -1,0 +1,14 @@
+
+- name: Get all nodes
+  command: kubectl get nodes
+  register: nodes
+
+- debug:
+    var: nodes.stdout
+
+- name: Get all pods
+  command: kubectl get pods -A
+  register: pods
+
+- debug:
+    var: pods.stdout
