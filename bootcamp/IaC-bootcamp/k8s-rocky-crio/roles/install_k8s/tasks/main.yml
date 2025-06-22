@@ -30,16 +30,19 @@
   when: multi_controller and inventory_hostname == groups['controllers'][0]
   register: kubeadm_init
 
-- name: Set kubeconfig on primary controller
-  shell: |
-    mkdir -p /root/.kube
-    cp -i /etc/kubernetes/admin.conf /root/.kube/config
+- name: Copy kubeconfig to localhost
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: /tmp/admin.conf
+    flat: yes
   when: inventory_hostname == groups['controllers'][0]
 
-- name: Copy kubeconfig to other controllers (HA)
+- name: Copy kubeconfig from localhost to other controllers
   copy:
-    src: /etc/kubernetes/admin.conf
+    src: /tmp/admin.conf
     dest: /root/.kube/config
-    remote_src: yes
-  when: multi_controller and inventory_hostname != groups['controllers'][0]
-  delegate_to: "{{ groups['controllers'][0] }}"
+    owner: root
+    group: root
+    mode: '0600'
+  when: inventory_hostname != groups['controllers'][0]
+
