@@ -25,3 +25,5 @@
       --kube-insecure-skip-tls-verify
   args:
     creates: /etc/cni/net.d/10-flannel.conflist
+  environment:
+    KUBECONFIG: /root/.kube/config
