@@ -1,13 +1,21 @@
 
 - name: Add Flannel Helm repo
-  shell: helm repo add flannel https://flannel-helm-charts.storage.googleapis.com
-  args:
-    creates: /tmp/flannel-repo-added
+  shell: helm repo add flannel https://flannel-io.github.io/flannel/
 
 - name: Update Helm repos
   shell: helm repo update
 
-- name: Install Flannel with Helm
+- name: Create kube-flannel namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: kube-flannel
+    state: present
+
+- name: Install Flannel via Helm
   shell: >
     helm install flannel flannel/flannel
-    --namespace kube-flannel --create-namespace
+    --namespace kube-flannel
+    --set podCidr="10.244.0.0/16"
+  args:
+    creates: /etc/cni/net.d/10-flannel.conflist

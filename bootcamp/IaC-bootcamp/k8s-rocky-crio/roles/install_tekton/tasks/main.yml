@@ -1,11 +1,11 @@
 
 - name: Add Tekton Helm repo
-  shell: helm repo add tekton https://openshift-pipelines.github.io/pipelines-helm
+  shell: helm repo add cdf https://cdfoundation.github.io/tekton-helm-chart/
 
 - name: Update Helm repos
   shell: helm repo update
 
 - name: Install Tekton Pipelines
   shell: >
-    helm install tekton-pipelines tekton/tekton-pipeline
+    helm upgrade --install tekton cdf/tekton-pipeline \
     --namespace tekton-pipelines --create-namespace
