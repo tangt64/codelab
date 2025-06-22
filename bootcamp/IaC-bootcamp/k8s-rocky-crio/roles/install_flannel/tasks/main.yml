@@ -7,7 +7,7 @@
 
 - name: Create kube-flannel namespace
   kubernetes.core.k8s:
-    kubeconfig: /etc/kuberenetes/admin.conf
+    kubeconfig: /etc/kubernetes/admin.conf
     verify_ssl: false
     state: present
     definition:
