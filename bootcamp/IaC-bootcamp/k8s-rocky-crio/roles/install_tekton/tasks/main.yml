@@ -8,6 +8,7 @@
 - name: Install Tekton Pipelines
   shell: >
     helm upgrade --install tekton cdf/tekton-pipeline \
-    --namespace tekton-pipelines --create-namespace
+    --namespace tekton-pipelines --create-namespace \
+    --kube-insecure-skip-tls-verify
   environment:
     KUBECONFIG: /root/.kube/config
