@@ -1,0 +1,43 @@
+- name: Generate control-plane join command
+  shell: |
+    kubeadm token create --print-join-command
+  register: join_output
+  when: inventory_hostname == 'node1.example.com'
+
+- name: Get discovery-token-ca-cert-hash
+  shell: |
+    openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt \
+      | openssl rsa -pubin -outform der 2>/dev/null \
+      | openssl dgst -sha256 -hex | sed 's/^.* //'
+  register: ca_hash
+  when: inventory_hostname == 'node1.example.com'
+
+- name: Get certificate key
+  shell: |
+    kubeadm init phase upload-certs --upload-certs | tail -1
+  register: cert_key
+  when: inventory_hostname == 'node1.example.com'
+
+- name: Set join command fact
+  set_fact:
+    full_join_command: "{{ join_output.stdout }} --control-plane --certificate-key {{ cert_key.stdout }} --cri-socket=unix:///var/run/crio/crio.sock"
+  when: inventory_hostname == 'node1.example.com'
+
+- name: Share join command with all hosts
+  add_host:
+    name: shared_host
+    groups: join_group
+    full_join_command: "{{ hostvars['node1.example.com'].full_join_command }}"
+  when: inventory_hostname == 'node1.example.com'
+
+- name: Join other control planes to cluster
+  shell: "{{ hostvars['shared_host'].full_join_command }}"
+  when: inventory_hostname != 'node1.example.com'
+
+- name: Share join command with all hosts
+  add_host:
+    name: shared_host
+    groups: join_group
+    full_join_command: "{{ hostvars['node1.example.com'].full_join_command }}"
+    join_command_worker: "{{ join_output.stdout }} --cri-socket=unix:///var/run/crio/crio.sock"
+  when: inventory_hostname == 'node1.example.com'

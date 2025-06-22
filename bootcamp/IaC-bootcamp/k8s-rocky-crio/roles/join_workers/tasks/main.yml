@@ -1,0 +1,3 @@
+- name: Join worker nodes to the cluster
+  shell: "{{ hostvars['node1.example.com'].join_command_worker }}"
+  when: inventory_hostname in groups['workers']

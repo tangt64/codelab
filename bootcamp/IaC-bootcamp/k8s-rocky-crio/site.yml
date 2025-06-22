@@ -11,3 +11,13 @@
     - install_flannel
     - install_helm
     - install_tekton
+
+#- hosts: controllers
+#  become: true
+#  roles:
+#    - join_control_planes
+
+- hosts: workers
+  become: true
+  roles:
+    - join_workers
