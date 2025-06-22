@@ -5,6 +5,17 @@
 - name: Update Helm repos
   shell: helm repo update
 
+- name: Create kube-flannel namespace
+  kubernetes.core.k8s:
+    kubeconfig: /etc/kubernetes/admin.conf
+    verify_ssl: false
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: tekton-pipelines
+
 - name: Install Tekton Pipelines
   shell: >
     helm install tekton cdf/tekton-pipeline \
