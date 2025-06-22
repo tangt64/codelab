@@ -26,7 +26,10 @@
 
 - name: Initialize cluster (multi controller)
   shell: |
-    kubeadm init --control-plane-endpoint="192.168.10.5:6443"                  --upload-certs                  --pod-network-cidr=10.244.0.0/16                  --cri-socket=unix:///var/run/crio/crio.sock
+    kubeadm init --control-plane-endpoint="192.168.10.5:6443" \
+    --upload-certs \
+    --pod-network-cidr=10.244.0.0/16 \
+    --cri-socket=unix:///var/run/crio/crio.sock
   when: multi_controller and inventory_hostname == groups['controllers'][0]
   register: kubeadm_init
 
