@@ -1,3 +1,2 @@
-
 - name: Join worker nodes to the cluster
   shell: "{{ hostvars[groups['controllers'][0]].join_command_worker }} --cri-socket=unix:///var/run/crio/crio.sock"
