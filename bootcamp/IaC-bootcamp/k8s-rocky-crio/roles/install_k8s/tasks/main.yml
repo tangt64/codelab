@@ -29,3 +29,12 @@
   shell: |
     mkdir -p /root/.kube
     cp -i /etc/kubernetes/admin.conf /root/.kube/config
+  when: inventory_hostname == groups['controller'][0]
+
+- name: Copy kubeconfig to other controllers
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: yes
+  when: inventory_hostname != groups['controllers'][0]
+  delegate_to: "{{ groups['controllers'][0] }}"
