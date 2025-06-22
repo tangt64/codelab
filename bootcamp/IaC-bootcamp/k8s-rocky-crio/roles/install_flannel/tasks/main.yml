@@ -7,11 +7,14 @@
 
 - name: Create kube-flannel namespace
   kubernetes.core.k8s:
-    api_version: v1
-    kind: Namespace
-    name: kube-flannel
+    kubeconfig: /etc/kuberenetes/admin.conf
+    verify_ssl: false
     state: present
-  verify_ssl: false
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: kube-flannel
 
 - name: Install Flannel via Helm
   shell: >
