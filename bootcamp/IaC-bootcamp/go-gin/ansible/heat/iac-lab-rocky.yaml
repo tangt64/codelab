@@ -1,0 +1,46 @@
+
+heat_template_version: 2018-08-31
+
+description: IAC Bootcamp Lab
+
+parameters:
+  email:
+    type: string
+    description: 사용자의 이메일 주소
+  image:
+    type: string
+    default: lab-rocky-9
+  flavor:
+    type: string
+    default: m1.small
+  key_name:
+    type: string
+    default: tang
+  net_infra:
+    type: string
+    default: net-infra
+
+resources:
+  vm1_port_infra:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_param: net_infra }
+
+  vm1:
+    type: OS::Nova::Server
+    properties:
+      name: iac-vm1
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: vm1_port_infra }
+
+outputs:
+  vm1_fixed_ip:
+    description: Static IP of iac-vm1 on iac-internal
+    value: 192.168.10.10
+
+  vm1_external_ip:
+    description: DHCP IP of iac-vm1 on net-infra
+    value: { get_attr: [ vm1_port_infra, fixed_ips, 0, ip_address ] }

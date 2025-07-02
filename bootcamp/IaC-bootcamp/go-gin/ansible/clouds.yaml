@@ -1,0 +1,13 @@
+clouds:
+  default:
+    auth:
+      auth_url: https://<SERVER_ADDR>:<SRV_PORT>
+      username: ""
+      project_id: <UUID>
+      password: ""
+      project_name: "lab.PoC"
+      user_domain_name: "Default"
+    region_name: "RegionOne"
+    interface: "public"
+    identity_api_version: 3
+    verify: false

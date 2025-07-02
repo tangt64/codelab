@@ -1,0 +1,29 @@
+
+- name: Lab 환경 배포
+  hosts: all
+  gather_facts: false
+  vars:
+    email: "{{ email }}"
+    password: "{{ password }}"
+  tasks:
+    - name: 오픈스택 프로젝트 생성
+      openstack.cloud.project:
+        name: "iac-{{ email }}"
+        domain: default
+        state: present
+
+    - name: 오픈스택 사용자 생성
+      openstack.cloud.identity_user:
+        name: "iac-{{ email }}"
+        password: "{{ password }}"
+        domain: default
+        default_project: "iac-{{ email }}"
+        state: present
+      register: user_info
+
+    - name: 사용자에 member 역할 할당
+      openstack.cloud.role_assignment:
+        user: "iac-{{ email }}"
+        project: "iac-{{ email }}"
+        role: member
+        state: present

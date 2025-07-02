@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>IAC Lab 신청</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center">
+  <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+    <h2 class="text-2xl font-bold text-center mb-6 text-gray-700">IAC Lab 신청</h2>
+    <form id="deployForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-600">이메일</label>
+        <input type="email" name="email" required
+               class="mt-1 block w-full px-4 py-2 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600">비밀번호</label>
+        <input type="password" name="password" required
+               class="mt-1 block w-full px-4 py-2 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+      </div>
+      <button type="submit"
+              class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl">
+        신청하기
+      </button>
+    </form>
+    <div class="mt-6">
+      <h3 class="text-lg font-medium text-gray-700">결과</h3>
+      <pre id="result" class="bg-gray-100 p-3 rounded-lg text-sm mt-2 whitespace-pre-wrap"></pre>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('deployForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      const response = await fetch('/deploy', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+    });
+  </script>
+</body>
+</html>
