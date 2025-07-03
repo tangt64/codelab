@@ -1,0 +1,102 @@
+
+heat_template_version: wallaby
+
+description: >
+  net-infra DHCP 네트워크와 iac-internal 고정 IP 네트워크를 사용하는 두 개의 VM 생성.
+  보안그룹 iac-lab이 없으면 생성하며, 모든 포트를 허용함.
+
+parameters:
+  image:
+    type: string
+    default: lab-rocky-9
+  flavor:
+    type: string
+    default: boot.iac
+  net_infra:
+    type: string
+    default: net-infra
+
+resources:
+  secgroup_iac_lab:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: iac-lab
+      description: Allow all traffic
+      rules:
+        - protocol: tcp
+          remote_ip_prefix: 0.0.0.0/0
+        - protocol: udp
+          remote_ip_prefix: 0.0.0.0/0
+        - protocol: icmp
+          remote_ip_prefix: 0.0.0.0/0
+
+  iac_internal_net:
+    type: OS::Neutron::Net
+    properties:
+      name: iac-internal
+
+  iac_internal_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: iac-internal-subnet
+      network: { get_resource: iac_internal_net }
+      cidr: 192.168.10.0/24
+      ip_version: 4
+      enable_dhcp: false
+
+  vm1_port_infra:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_param: net_infra }
+      security_groups: [ { get_resource: secgroup_iac_lab } ]
+
+  vm1_port_internal:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: iac_internal_net }
+      fixed_ips:
+        - ip_address: 192.168.10.10
+      security_groups: [ { get_resource: secgroup_iac_lab } ]
+
+  vm2_port_infra:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_param: net_infra }
+      security_groups: [ { get_resource: secgroup_iac_lab } ]
+
+  vm2_port_internal:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: iac_internal_net }
+      fixed_ips:
+        - ip_address: 192.168.10.20
+      security_groups: [ { get_resource: secgroup_iac_lab } ]
+
+  vm1:
+    type: OS::Nova::Server
+    properties:
+      name: iac-vm1
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      networks:
+        - port: { get_resource: vm1_port_infra }
+        - port: { get_resource: vm1_port_internal }
+
+  vm2:
+    type: OS::Nova::Server
+    properties:
+      name: iac-vm2
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      networks:
+        - port: { get_resource: vm2_port_infra }
+        - port: { get_resource: vm2_port_internal }
+
+outputs:
+  vm1_fixed_ip:
+    description: Static IP of iac-vm1 on iac-internal
+    value: 192.168.10.10
+
+  vm2_fixed_ip:
+    description: Static IP of iac-vm2 on iac-internal
+    value: 192.168.10.20

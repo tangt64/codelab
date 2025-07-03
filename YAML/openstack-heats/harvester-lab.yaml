@@ -1,0 +1,140 @@
+heat_template_version: 2016-10-14
+
+description: >
+  Harvester용 통합 템플릿 – 네트워크, 보안 그룹, 컨트롤러 3대, 컴퓨트 2대
+
+parameters:
+  image:
+    type: string
+    default: harvester-v1.4.3-amd64-iso
+  flavor:
+    type: string
+    default: poc.harvester-eph
+
+resources:
+  harvester_network:
+    type: OS::Neutron::Net
+    properties:
+      name: harvester-internal
+
+  harvester_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: harvester-subnet
+      network_id: { get_resource: harvester_network }
+      cidr: 192.168.10.0/24
+      ip_version: 4
+      enable_dhcp: false
+
+  harvester_sg:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: harvester-sg
+      description: Allow all traffic
+      rules:
+        - protocol: tcp
+          remote_ip_prefix: 0.0.0.0/0
+        - protocol: udp
+          remote_ip_prefix: 0.0.0.0/0
+        - protocol: icmp
+          remote_ip_prefix: 0.0.0.0/0
+
+  # 컨트롤러 3대 포트 + VM
+  harv_ctrl1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: harvester_network }
+      fixed_ips:
+        - ip_address: 192.168.10.110
+      security_groups: [ { get_resource: harvester_sg } ]
+
+  harv_ctrl1:
+    type: OS::Nova::Server
+    properties:
+      name: harv-ctrl-1
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      networks:
+        - port: { get_resource: harv_ctrl1_port }
+      config_drive: true
+
+  harv_ctrl2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: harvester_network }
+      fixed_ips:
+        - ip_address: 192.168.10.120
+      security_groups: [ { get_resource: harvester_sg } ]
+
+  harv_ctrl2:
+    type: OS::Nova::Server
+    properties:
+      name: harv-ctrl-2
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      networks:
+        - port: { get_resource: harv_ctrl2_port }
+      config_drive: true
+
+  harv_ctrl3_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: harvester_network }
+      fixed_ips:
+        - ip_address: 192.168.10.130
+      security_groups: [ { get_resource: harvester_sg } ]
+
+  harv_ctrl3:
+    type: OS::Nova::Server
+    properties:
+      name: harv-ctrl-3
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      networks:
+        - port: { get_resource: harv_ctrl3_port }
+      config_drive: true
+
+  # 컴퓨트 2대 포트 + VM
+  harv_comp1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: harvester_network }
+      fixed_ips:
+        - ip_address: 192.168.10.140
+      security_groups: [ { get_resource: harvester_sg } ]
+
+  harv_comp1:
+    type: OS::Nova::Server
+    properties:
+      name: harv-comp-1
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      networks:
+        - port: { get_resource: harv_comp1_port }
+      config_drive: true
+
+  harv_comp2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: harvester_network }
+      fixed_ips:
+        - ip_address: 192.168.10.141
+      security_groups: [ { get_resource: harvester_sg } ]
+
+  harv_comp2:
+    type: OS::Nova::Server
+    properties:
+      name: harv-comp-2
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      networks:
+        - port: { get_resource: harv_comp2_port }
+      config_drive: true
+
+  reserved_port_250:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: harvester_network }
+      fixed_ips:
+        - ip_address: 192.168.10.230
+      security_groups: [ { get_resource: harvester_sg } ]

@@ -5,7 +5,7 @@ description: 랜처 랩 프로비저닝 Heat 현재 구성은 최소 사양으�
 parameters:
   image:
     type: string
-    default: rancher-opensuse
+    default: lab-opensuse-15.6
   flavor_haproxy:
     type: string
     default: t1.rancher-haproxy
@@ -28,7 +28,7 @@ resources:
     properties:
       name: rancher-internal
       value_specs:
-        mtu: 1450
+        mtu: 8950
 
   rancher_internal_subnet:
     type: OS::Neutron::Subnet
@@ -291,7 +291,7 @@ resources:
     properties:
       name: rancher-client
       image: { get_param: image }
-      flavor: v1.middle
+      flavor: m1.medium
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: client_internal_port }

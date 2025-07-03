@@ -34,32 +34,13 @@ resources:
     type: OS::Neutron::Subnet
     properties:
       network_id: { get_resource: rancher_internal_net }
-      cidr: 192.168.10.0/16
+      cidr: 192.168.10.0/24
       ip_version: 4
-      enable_dhcp: false
+      enable_dhcp: true
       gateway_ip: null
       allocation_pools:
         - start: 192.168.10.2
           end: 192.168.10.254
-
-  rancher_external_net:
-    type: OS::Neutron::Net
-    properties:
-      name: rancher-external
-      value_specs:
-        mtu: 1450
-
-  rancher_external_subnet:
-    type: OS::Neutron::Subnet
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      cidr: 192.10.10.0/24
-      ip_version: 4
-      enable_dhcp: false
-      gateway_ip: null
-      allocation_pools:
-        - start: 192.10.10.2
-          end: 192.10.10.254
 
   rancher_sg:
     type: OS::Neutron::SecurityGroup
@@ -81,13 +62,6 @@ resources:
       fixed_ips: [ { ip_address: 192.168.10.250 } ]
       security_groups: [ { get_resource: rancher_sg } ]
 
-  node1_external_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      fixed_ips: [ { ip_address: 192.10.10.250 } ]
-      security_groups: [ { get_resource: rancher_sg } ]
-
   node1_infra_port:
     type: OS::Neutron::Port
     properties:
@@ -103,7 +77,6 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: node1_internal_port }
-        - port: { get_resource: node1_external_port }
         - port: { get_resource: node1_infra_port }
 
   node2_internal_port:
@@ -111,13 +84,6 @@ resources:
     properties:
       network_id: { get_resource: rancher_internal_net }
       fixed_ips: [ { ip_address: 192.168.10.240 } ]
-      security_groups: [ { get_resource: rancher_sg } ]
-
-  node2_external_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      fixed_ips: [ { ip_address: 192.10.10.240 } ]
       security_groups: [ { get_resource: rancher_sg } ]
 
   node2_infra_port:
@@ -135,7 +101,6 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: node2_internal_port }
-        - port: { get_resource: node2_external_port }
         - port: { get_resource: node2_infra_port }
 
   node3_internal_port:
@@ -143,13 +108,6 @@ resources:
     properties:
       network_id: { get_resource: rancher_internal_net }
       fixed_ips: [ { ip_address: 192.168.10.10 } ]
-      security_groups: [ { get_resource: rancher_sg } ]
-
-  node3_external_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      fixed_ips: [ { ip_address: 192.10.10.10 } ]
       security_groups: [ { get_resource: rancher_sg } ]
 
   node3_infra_port:
@@ -167,7 +125,6 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: node3_internal_port }
-        - port: { get_resource: node3_external_port }
         - port: { get_resource: node3_infra_port }
 
   node4_internal_port:
@@ -175,13 +132,6 @@ resources:
     properties:
       network_id: { get_resource: rancher_internal_net }
       fixed_ips: [ { ip_address: 192.168.10.20 } ]
-      security_groups: [ { get_resource: rancher_sg } ]
-
-  node4_external_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      fixed_ips: [ { ip_address: 192.10.10.20 } ]
       security_groups: [ { get_resource: rancher_sg } ]
 
   node4_infra_port:
@@ -199,7 +149,6 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: node4_internal_port }
-        - port: { get_resource: node4_external_port }
         - port: { get_resource: node4_infra_port }
 
   node5_internal_port:
@@ -207,13 +156,6 @@ resources:
     properties:
       network_id: { get_resource: rancher_internal_net }
       fixed_ips: [ { ip_address: 192.168.10.30 } ]
-      security_groups: [ { get_resource: rancher_sg } ]
-
-  node5_external_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      fixed_ips: [ { ip_address: 192.10.10.30 } ]
       security_groups: [ { get_resource: rancher_sg } ]
 
   node5_infra_port:
@@ -231,7 +173,6 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: node5_internal_port }
-        - port: { get_resource: node5_external_port }
         - port: { get_resource: node5_infra_port }
 
   node6_internal_port:
@@ -239,13 +180,6 @@ resources:
     properties:
       network_id: { get_resource: rancher_internal_net }
       fixed_ips: [ { ip_address: 192.168.10.40 } ]
-      security_groups: [ { get_resource: rancher_sg } ]
-
-  node6_external_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      fixed_ips: [ { ip_address: 192.10.10.40 } ]
       security_groups: [ { get_resource: rancher_sg } ]
 
   node6_infra_port:
@@ -263,7 +197,6 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: node6_internal_port }
-        - port: { get_resource: node6_external_port }
         - port: { get_resource: node6_infra_port }
 
   client_internal_port:
@@ -271,12 +204,6 @@ resources:
     properties:
       network_id: { get_resource: rancher_internal_net }
       fixed_ips: [ { ip_address: 192.168.10.241 } ]
-      security_groups: [ { get_resource: rancher_sg } ]
-
-  client_external_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: rancher_external_net }
       security_groups: [ { get_resource: rancher_sg } ]
 
   client_infra_port:
@@ -294,37 +221,4 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: client_internal_port }
-        - port: { get_resource: client_external_port }
         - port: { get_resource: client_infra_port }
-
-  reserved_port_251:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      fixed_ips:
-        - ip_address: 192.10.10.251
-      security_groups: [ { get_resource: rancher_sg } ]
-
-  reserved_port_252:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      fixed_ips:
-        - ip_address: 192.10.10.252
-      security_groups: [ { get_resource: rancher_sg } ]
-
-  reserved_port_253:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      fixed_ips:
-        - ip_address: 192.10.10.253
-      security_groups: [ { get_resource: rancher_sg } ]
-
-  reserved_port_254:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: rancher_external_net }
-      fixed_ips:
-        - ip_address: 192.10.10.254
-      security_groups: [ { get_resource: rancher_sg } ]
