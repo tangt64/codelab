@@ -1,2 +1,13 @@
+- name: Generate kubeadm join command on primary controller
+  command: kubeadm token create --print-join-command
+  become: yes
+  run_once: true
+  delegate_to: "{{ groups['controllers'][0] }}"
+  register: join_cmd
+
 - name: Join worker nodes to the cluster
-  shell: "{{ hostvars[groups['controllers'][0]].join_command_worker }} --cri-socket=unix:///var/run/crio/crio.sock"
+  command: "{{ join_cmd.stdout }}"
+  args:
+    creates: /etc/kubernetes/kubelet.conf
+  become: yes
+  when: inventory_hostname in groups['workers']
