@@ -21,7 +21,7 @@
     helm install flannel flannel/flannel \
       --namespace kube-flannel \
       --create-namespace \
-      --set podCidr="10.244.0.0/16" \
+      --set podCidr="20.244.0.0/16" \
       --kube-insecure-skip-tls-verify
   args:
     creates: /etc/cni/net.d/10-flannel.conflist

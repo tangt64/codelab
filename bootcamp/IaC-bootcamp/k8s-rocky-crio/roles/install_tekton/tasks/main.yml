@@ -1,9 +1,5 @@
-
 - name: Add Tekton Helm repo
   shell: helm repo add cdf https://cdfoundation.github.io/tekton-helm-chart/
-
-- name: Update Helm repos
-  shell: helm repo update
 
 - name: Create kube-flannel namespace
   kubernetes.core.k8s:
@@ -16,11 +12,9 @@
       metadata:
         name: tekton-pipelines
 
-- name: Install Tekton Pipelines
-  shell: >
-    helm install tekton cdf/tekton-pipeline \
-    --namespace tekton-pipelines \
-    --create-namespace \
-    --kube-insecure-skip-tls-verify
-  environment:
-    KUBECONFIG: /root/.kube/config
+- name: Tekton Pipelines
+  kubernetes.core.k8s:
+    kubeconfig: /etc/kubernetes/admin.conf
+    state: present
+    src: https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
+    validate_certs: no

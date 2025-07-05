@@ -1,6 +1,6 @@
 - name: Wait for Gogs to be up
   uri:
-    url: "https://{{ gogs_domain }}/"
+    url: "https://{{ gogs_domain }}:5000/"
     method: GET
     validate_certs: false
   register: result
@@ -8,49 +8,49 @@
   delay: 5
   until: result.status == 200
 
-- name: Create admin user
-  uri:
-    url: "https://{{ gogs_domain }}/api/v1/admin/users"
-    method: POST
-    validate_certs: false
-    body_format: json
-    body:
-      username: "{{ gogs_admin.username }}"
-      password: "{{ gogs_admin.password }}"
-      email: "{{ gogs_admin.email }}"
-      must_change_password: false
-      send_notify: false
-    headers:
-      Authorization: "token {{ gogs_internal_token }}"
-  register: create_user_result
-  failed_when: create_user_result.status not in [201, 409]
-
-- name: Login to get token
-  uri:
-    url: "https://{{ gogs_domain }}/api/v1/users/{{ gogs_admin.username }}/tokens"
-    method: POST
-    validate_certs: false
-    body_format: json
-    body:
-      name: "ansible-token"
-    user: "{{ gogs_admin.username }}"
-    password: "{{ gogs_admin.password }}"
-  register: gogs_token_response
-
-- name: Set Gogs API token fact
-  set_fact:
-    gogs_api_token: "{{ gogs_token_response.json.sha1 }}"
-
-- name: Create new repository
-  uri:
-    url: "https://{{ gogs_domain }}/api/v1/user/repos"
-    method: POST
-    validate_certs: false
-    headers:
-      Authorization: "token {{ gogs_api_token }}"
-    body_format: json
-    body:
-      name: "{{ gogs_repo.name }}"
-      private: "{{ gogs_repo.private }}"
-  register: repo_creation
-  failed_when: repo_creation.status not in [201, 409]
+#- name: Create admin user
+#  uri:
+#    url: "https://{{ gogs_domain }}:5000/api/v1/admin/users"
+#    method: POST
+#    validate_certs: false
+#    body_format: json
+#    body:
+#      username: "{{ gogs_admin.username }}"
+#      password: "{{ gogs_admin.password }}"
+#      email: "{{ gogs_admin.email }}"
+#      must_change_password: false
+#      send_notify: false
+#    headers:
+#      Authorization: "token {{ gogs_internal_token }}"
+#  register: create_user_result
+#  failed_when: create_user_result.status not in [201, 409]
+#
+#- name: Login to get token
+#  uri:
+#    url: "https://{{ gogs_domain }}:5000/api/v1/users/{{ gogs_admin.username }}/tokens"
+#    method: POST
+#    validate_certs: false
+#    body_format: json
+#    body:
+#      name: "ansible-token"
+#    user: "{{ gogs_admin.username }}"
+#    password: "{{ gogs_admin.password }}"
+#  register: gogs_token_response
+#
+#- name: Set Gogs API token fact
+#  set_fact:
+#    gogs_api_token: "{{ gogs_token_response.json.sha1 }}"
+#
+#- name: Create new repository
+#  uri:
+#    url: "https://{{ gogs_domain }}:5000/api/v1/user/repos"
+#    method: POST
+#    validate_certs: false
+#    headers:
+#      Authorization: "token {{ gogs_api_token }}"
+#    body_format: json
+#    body:
+#      name: "{{ gogs_repo.name }}"
+#      private: "{{ gogs_repo.private }}"
+#  register: repo_creation
+#  failed_when: repo_creation.status not in [201, 409]
