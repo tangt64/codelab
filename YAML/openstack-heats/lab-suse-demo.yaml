@@ -1,0 +1,223 @@
+heat_template_version: 2018-08-31
+
+description: |
+  Rancher & Harvester 랩 프로비저닝 템플릿.
+  - Rancher 컨트롤 노드 3대(rancher1~3)
+  - Harvester 워커 노드 3대(harvester1~3)
+  - Storage 네트워크 및 Harvester NAT 구성 포함
+
+parameters:
+  rancher_image:
+    type: string
+    default: lab-rocky-9
+    description: VM 이미지 이름
+  harvester_image:
+    type: string
+    default: harvester-v1.5.0-amd64-iso 
+    description: VM 이미지 이름
+  flavor_haproxy:
+    type: string
+    default: t1.rancher-haproxy
+  flavor_bootstrap:
+    type: string
+    default: t1.rancher-bootstrap
+  flavor_rancher:
+    type: string
+    default: poc.rancher 
+  flavor_harvester:
+    type: string
+    default: poc.harvester-eph 
+  key_name:
+    type: string
+    default: suse_key
+    description: SSH 키 페어 이름
+
+resources:
+  suse_internal_net:
+    type: OS::Neutron::Net
+    properties:
+      name: suse-internal
+      value_specs:
+        mtu: 8950
+
+  suse_internal_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: suse_internal_net }
+      cidr: 192.168.10.0/16
+      ip_version: 4
+      enable_dhcp: true
+      gateway_ip: null
+      dns_nameservers: [192.168.10.240, 192.10.10.250, 8.8.8.8]
+      allocation_pools:
+        - start: 192.168.10.2
+          end: 192.168.10.254
+
+  # Storage 네트워크
+  storage_net:
+    type: OS::Neutron::Net
+    properties:
+      name: suse-stoage
+      value_specs:
+        mtu: 1550
+
+  storage_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: storage_net }
+      cidr: 192.168.20.0/24
+      ip_version: 4
+      enable_dhcp: true
+      gateway_ip: 192.168.20.1
+      dns_nameservers: [8.8.8.8, 8.8.4.4]
+      allocation_pools:
+        - start: 192.168.20.2
+          end: 192.168.20.254
+
+  # 보안 그룹
+  suse_sg:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: suse-sg
+      rules:
+        - protocol: icmp
+        - protocol: tcp
+          port_range_min: 1
+          port_range_max: 65535
+        - protocol: udp
+          port_range_min: 1
+          port_range_max: 65535
+
+  rancher1_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: suse_internal_net }
+      fixed_ips: [{ ip_address: 192.168.10.10 }]
+      security_groups: [{ get_resource: suse_sg }]
+  rancher1_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: net-infra
+      security_groups: [{ get_resource: suse_sg }]
+  rancher1:
+    type: OS::Nova::Server
+    properties:
+      name: rancher1
+      image: { get_param: rancher_image }
+      flavor: { get_param: flavor_rancher }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: rancher1_internal_port }
+        - port: { get_resource: rancher1_infra_port }
+
+  rancher2_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: suse_internal_net }
+      fixed_ips: [{ ip_address: 192.168.10.20 }]
+      security_groups: [{ get_resource: suse_sg }]
+  rancher2_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: net-infra
+      security_groups: [{ get_resource: suse_sg }]
+  rancher2:
+    type: OS::Nova::Server
+    properties:
+      name: rancher2
+      image: { get_param: rancher_image }
+      flavor: { get_param: flavor_rancher }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: rancher2_internal_port }
+        - port: { get_resource: rancher2_infra_port }
+
+  rancher3_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: suse_internal_net }
+      fixed_ips: [{ ip_address: 192.168.10.30 }]
+      security_groups: [{ get_resource: suse_sg }]
+  rancher3_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: net-infra
+      security_groups: [{ get_resource: suse_sg }]
+  rancher3:
+    type: OS::Nova::Server
+    properties:
+      name: rancher3
+      image: { get_param: rancher_image }
+      flavor: { get_param: flavor_rancher }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: rancher3_internal_port }
+        - port: { get_resource: rancher3_infra_port }
+
+  # Harvester 워커 노드
+  harvester1_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: suse_internal_net }
+      fixed_ips: [{ ip_address: 192.168.10.50 }]
+      security_groups: [{ get_resource: suse_sg }]
+  harvester1_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: net-infra
+      security_groups: [{ get_resource: suse_sg }]
+  harvester1:
+    type: OS::Nova::Server
+    properties:
+      name: harvester1
+      image: { get_param: harvester_image }
+      flavor: { get_param: flavor_harvester }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: harvester1_internal_port }
+        - port: { get_resource: harvester1_infra_port }
+
+  harvester2_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: suse_internal_net }
+      fixed_ips: [{ ip_address: 192.168.10.60 }]
+      security_groups: [{ get_resource: suse_sg }]
+  harvester2_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: net-infra
+      security_groups: [{ get_resource: suse_sg }]
+  harvester2:
+    type: OS::Nova::Server
+    properties:
+      name: harvester2
+      image: { get_param: harvester_image }
+      flavor: { get_param: flavor_harvester }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: harvester2_internal_port }
+        - port: { get_resource: harvester2_infra_port }
+
+  harvester3_internal_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: suse_internal_net }
+      fixed_ips: [{ ip_address: 192.168.10.70 }]
+      security_groups: [{ get_resource: suse_sg }]
+  harvester3_infra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: net-infra
+      security_groups: [{ get_resource: suse_sg }]
+  harvester3:
+    type: OS::Nova::Server
+    properties:
+      name: harvester3
+      image: { get_param: harvester_image }
+      flavor: { get_param: flavor_harvester }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: harvester3_internal_port }
+        - port: { get_resource: harvester3_infra_port }
+
