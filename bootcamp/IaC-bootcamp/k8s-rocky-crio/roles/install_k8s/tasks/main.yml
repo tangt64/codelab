@@ -24,15 +24,6 @@
   when: not multi_controller and inventory_hostname == groups['controllers'][0]
   register: kubeadm_init
 
-- name: Initialize cluster (multi controller)
-  shell: |
-    kubeadm init --control-plane-endpoint="192.168.10.5:6443" \
-    --upload-certs \
-    --pod-network-cidr=20.244.0.0/16 \
-    --cri-socket=unix:///var/run/crio/crio.sock
-  when: multi_controller and inventory_hostname == groups['controllers'][0]
-  register: kubeadm_init
-
 - name: Copy kubeconfig to localhost
   fetch:
     src: /etc/kubernetes/admin.conf
@@ -42,9 +33,9 @@
 
 - name: Copy kubeconfig from localhost to other controllers
   copy:
-    src: /tmp/admin.conf
+    src: /etc/kubernetes/admin.conf
     dest: /root/.kube/config
     owner: root
     group: root
-    mode: '0600'
+    mode: '0700'
   when: inventory_hostname != groups['controllers'][0]
