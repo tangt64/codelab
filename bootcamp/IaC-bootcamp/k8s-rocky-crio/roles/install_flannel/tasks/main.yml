@@ -5,6 +5,19 @@
 - name: Update Helm repos
   shell: helm repo update
 
+- name: Ensure python3-pip is installed
+  ansible.builtin.package:
+    name: python3-pip
+    state: present
+  when: inventory_hostname in groups['controllers'] or inventory_hostname in groups['workers']
+ 
+- name: Install kubernetes Python client library
+  ansible.builtin.pip:
+    name: kubernetes
+    state: present
+    executable: pip3
+  when: inventory_hostname in groups['controllers'] or inventory_hostname in groups['workers']
+
 - name: Create kube-flannel namespace
   kubernetes.core.k8s:
     kubeconfig: /etc/kubernetes/admin.conf
@@ -26,4 +39,4 @@
   args:
     creates: /etc/cni/net.d/10-flannel.conflist
   environment:
-    KUBECONFIG: /root/.kube/config
+    kubeconfig: /root/.kube/config
