@@ -1,0 +1,171 @@
+heat_template_version: 2018-08-31
+
+description: >
+  lf-labs: 보안그룹(lf-labs) + 3개 인스턴스(rocky/debian/opensuse)
+  - 네트워크: net-infra
+  - 키페어 없이 비밀번호 로그인 허용
+  - rocky/debian/suse 계정 생성 및 PW 로그인 허용 (cloud-init)
+
+parameters:
+  net_name:
+    type: string
+    default: net-infra
+    description: Existing Neutron network name or ID to attach instances.
+  flavor:
+    type: string
+    default: m1.small
+    description: Nova flavor for all instances.
+  sg_name:
+    type: string
+    default: lf-labs
+    description: Security group name (allow all).
+  rocky_image:
+    type: string
+    default: lf-rocky9
+  debian_image:
+    type: string
+    default: lf-debian12
+  suse_image:
+    type: string
+    default: lf-suse15
+  admin_password:
+    type: string
+    default: lflabs
+    description: Password to set for rocky/debian/suse (and root) via cloud-init.
+    hidden: true
+
+resources:
+  secgroup_all_allow:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: { get_param: sg_name }
+      description: "Allow all ingress/egress (lab only)"
+      rules:
+        # Ingress ALL (IPv4)
+        - direction: ingress
+          ethertype: IPv4
+          protocol: tcp
+          remote_ip_prefix: 0.0.0.0/0
+        - direction: ingress
+          ethertype: IPv4
+          protocol: udp
+          remote_ip_prefix: 0.0.0.0/0
+        - direction: ingress
+          ethertype: IPv4
+          protocol: icmp
+          remote_ip_prefix: 0.0.0.0/0
+        # Egress ALL (IPv4)
+        - direction: egress
+          ethertype: IPv4
+
+  user_data_common:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        # 1) 비밀번호 로그인 전체 허용
+        ssh_pwauth: true
+        disable_root: false
+
+        # 2) 세 계정 보장(없으면 생성, 있으면 속성 갱신)
+        users:
+          - default
+          - name: rocky
+            gecos: "Rocky user"
+            lock_passwd: false
+            shell: /bin/bash
+            sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+          - name: debian
+            gecos: "Debian user"
+            lock_passwd: false
+            shell: /bin/bash
+            sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+          - name: suse
+            gecos: "SUSE user"
+            lock_passwd: false
+            shell: /bin/bash
+            sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+
+        # 3) 비밀번호 설정(요청 PW로)
+        chpasswd:
+          list:
+            str_replace:
+              template: |
+                root:__PASS__
+                rocky:__PASS__
+                debian:__PASS__
+                suse:__PASS__
+              params:
+                __PASS__: { get_param: admin_password }
+          expire: false
+
+        # 4) SSH 드롭인으로 강제 허용(드롭인이 메인 설정보다 우선)
+        write_files:
+          - path: /etc/ssh/sshd_config.d/99-lflabs.conf
+            permissions: '0644'
+            content: |
+              PasswordAuthentication yes
+              PermitRootLogin yes
+
+        # 5) 일부 이미지의 "비번 로그인 비활성" 드롭인 제거 + SSH 재시작
+        runcmd:
+          - rm -f /etc/ssh/sshd_config.d/*disable* || true
+          - (systemctl restart sshd || systemctl restart ssh) || true
+
+  srv_rocky:
+    type: OS::Nova::Server
+    properties:
+      name: rocky
+      image: { get_param: rocky_image }
+      flavor: { get_param: flavor }
+      networks:
+        - network: { get_param: net_name }
+      security_groups:
+        - { get_resource: secgroup_all_allow }
+      user_data_format: RAW
+      user_data: { get_resource: user_data_common }
+
+  srv_debian:
+    type: OS::Nova::Server
+    properties:
+      name: debian
+      image: { get_param: debian_image }
+      flavor: { get_param: flavor }
+      networks:
+        - network: { get_param: net_name }
+      security_groups:
+        - { get_resource: secgroup_all_allow }
+      user_data_format: RAW
+      user_data: { get_resource: user_data_common }
+
+  srv_opensuse:
+    type: OS::Nova::Server
+    properties:
+      name: opensuse
+      image: { get_param: suse_image }
+      flavor: { get_param: flavor }
+      networks:
+        - network: { get_param: net_name }
+      security_groups:
+        - { get_resource: secgroup_all_allow }
+      user_data_format: RAW
+      user_data: { get_resource: user_data_common }
+
+outputs:
+  security_group_id:
+    value: { get_resource: secgroup_all_allow }
+    description: Created security group ID
+  security_group_name_via_param:
+    value: { get_param: sg_name }
+    description: Security group name (via parameter)
+  security_group_name_via_show:
+    value: { get_attr: [secgroup_all_allow, show, name] }
+    description: Security group name (via get_attr show.name)
+  rocky_id:
+    value: { get_resource: srv_rocky }
+    description: Rocky server ID
+  debian_id:
+    value: { get_resource: srv_debian }
+    description: Debian server ID
+  opensuse_id:
+    value: { get_resource: srv_opensuse }
+    description: openSUSE server ID
