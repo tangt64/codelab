@@ -93,7 +93,7 @@ resources:
                 root:__PASS__
                 rocky:__PASS__
                 debian:__PASS__
-                suse:__PASS__
+                opensuse:__PASS__
               params:
                 __PASS__: { get_param: admin_password }
           expire: false
