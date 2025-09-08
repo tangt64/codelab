@@ -27,7 +27,7 @@ parameters:
     default: lf-debian12
   suse_image:
     type: string
-    default: lf-suse15
+    default: lab-opensuse-15.6
   admin_password:
     type: string
     default: lflabs
