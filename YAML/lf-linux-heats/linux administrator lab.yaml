@@ -79,7 +79,7 @@ resources:
             lock_passwd: false
             shell: /bin/bash
             sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-          - name: suse
+          - name: opensuse
             gecos: "SUSE user"
             lock_passwd: false
             shell: /bin/bash
