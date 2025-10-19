@@ -1,0 +1,11 @@
+# vi changed_when.yaml
+- name: 사용자 생성 및 변경 상태 보고
+  ansible.builtin.command: /usr/bin/true
+  register: user_creation_result
+  changed_when: "'User already exists' not in user_creation_result.stdout"
+
+- name: 디버그 출력
+  ansible.builtin.debug:
+    msg: "사용자 생성 Task가 시스템을 변경했습니다."
+  when: user_creation_result is changed
+# ansible-playbook -i localhost, changed_when.yaml

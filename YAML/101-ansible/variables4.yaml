@@ -1,0 +1,11 @@
+# variables4.yaml
+---
+- name: this is first dict
+  hosts: localhost
+  vars:
+    dict:
+      firstname: choi
+      lastname: gookhyun
+  tasks:
+  - name: shows your name
+    command: echo "{{ dict.fistname }} {{ dict.lastname }}"

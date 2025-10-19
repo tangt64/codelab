@@ -1,0 +1,11 @@
+all:
+  hosts:
+    mail.example.com:
+  children:
+    webservers:
+      hosts:
+        foo.example.com:
+        bar.example.com:
+      vars:
+        http_port: 8080
+        http_name: www.example.com

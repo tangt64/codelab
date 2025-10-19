@@ -1,0 +1,6 @@
+openstacksdk>=1.0.0
+python-openstackclient>=6.0.0
+ansible-core>=2.15
+netaddr
+cryptography
+requests

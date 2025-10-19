@@ -1,0 +1,12 @@
+# vi variable2.yaml
+---
+- name: this is first list
+  hosts: localhost
+  vars:
+    fruits_list:
+      - apple
+      - mango
+      - pineapple
+  tasks:
+  - name: shows your fruits
+    command: echo "{{ fruits_list }}"

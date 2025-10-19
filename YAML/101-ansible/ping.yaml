@@ -1,0 +1,8 @@
+# ansible all -m ping
+
+# vi ping.yml
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: 연결 확인
+      ansible.builtin.ping:

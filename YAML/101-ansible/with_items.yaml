@@ -1,0 +1,13 @@
+# with_items.yaml
+- hosts: localhost
+  tasks:
+  - debug:
+      msg: "{{ item }}"
+    with_items:
+      - 1
+      - [2,3]
+      - 4
+- hosts: localhost
+  tasks:
+  - debug:
+      msg: "{{ item }}"

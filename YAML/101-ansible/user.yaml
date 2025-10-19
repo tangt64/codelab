@@ -1,0 +1,9 @@
+# user.yaml
+- name: ansible 사용자 생성
+  ansible.builtin.user:
+    name: ansible
+    comment: "Automation user"
+    shell: /bin/bash
+    groups: wheel
+    append: yes
+    state: present

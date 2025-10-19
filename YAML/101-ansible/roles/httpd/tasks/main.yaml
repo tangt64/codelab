@@ -1,0 +1,9 @@
+# vi roles/httpd/tasks/main.yaml
+- name: install a httpd package
+  yum:
+    name: httpd
+    state: latest
+- name: template a httpd configuration file
+  template:
+    src: httpd.confi.j2
+    dest: /etc/httpd/conf/httpd.conf

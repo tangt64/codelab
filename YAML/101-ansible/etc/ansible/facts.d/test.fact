@@ -1,0 +1,4 @@
+[deployment]
+mgmt_name=choigookhyun
+mgmt_type=k8s_master
+mgmt_division=infra

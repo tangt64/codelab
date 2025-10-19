@@ -1,0 +1,17 @@
+version: 3
+images:
+  base_image:
+    name: quay.io/ansible/ansible-runner:stable-2.15
+  builder_image:
+    name: quay.io/ansible/ansible-builder:latest
+
+dependencies:
+  python: requirements.txt
+  system: bindep.txt
+  galaxy: requirements.yml
+additional_build_steps:
+  prepend:
+    - RUN echo "▶ Starting custom build for OpenStack EE"
+    - RUN dnf install -y git && dnf clean all
+  append:
+    - RUN echo "✅ OpenStack Ansible Execution Environment build complete!"

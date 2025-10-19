@@ -1,0 +1,22 @@
+- name: Drop agent script
+  template:
+    src: galera-agent.sh.j2
+    dest: /usr/local/bin/galera-agent
+    mode: '0755'
+
+- name: Drop systemd units (RO socket/service)
+  template: { src: galera-agent-ro.socket.j2, dest: /etc/systemd/system/galera-agent-ro.socket, mode: '0644' }
+- template: { src: galera-agent-ro.service.j2, dest: /etc/systemd/system/galera-agent-ro.service, mode: '0644' }
+
+- name: Drop systemd units (RW socket/service)
+  template: { src: galera-agent-rw.socket.j2, dest: /etc/systemd/system/galera-agent-rw.socket, mode: '0644' }
+- template: { src: galera-agent-rw.service.j2, dest: /etc/systemd/system/galera-agent-rw.service, mode: '0644' }
+
+- name: Enable & start agent sockets
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - galera-agent-ro.socket
+    - galera-agent-rw.socket

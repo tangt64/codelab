@@ -1,0 +1,12 @@
+# vi with_fileglob.yaml
+- hosts: localhost
+  tasks:
+  - debug:
+      msg: "{{ item }}"
+    with_fileglob: '*.yaml'
+- hosts: localhost
+  tasks:
+  - debug:
+      msg: "{{ item }}"
+    loop: "{{ lookup('fileglob', '*.txt', wantlist=True) }}"
+    loop: "{{ lookup('fileglob', '*.txt', wantlist=True) | flatten }}"

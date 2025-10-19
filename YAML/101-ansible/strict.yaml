@@ -1,0 +1,9 @@
+# vi strict.yaml
+- hosts: localhost
+  vars:
+    installedVersion: 1.1
+    softwareVersion: 2.4.0
+  tasks:
+  - debug:
+      msg: "{{ installedVersion is version(softwareVersion, '<=') }}" 
+# ansible-playbook -i localhost, strict.yaml

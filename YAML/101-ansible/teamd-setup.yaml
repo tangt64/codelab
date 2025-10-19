@@ -1,0 +1,39 @@
+# vi teamd-setup.yaml
+---
+- name: Configure teamd interface
+  hosts: all
+  become: true
+  vars:
+    team_name: team0
+    team_mode: activebackup
+    team_ports:
+      - eth1
+      - eth2
+    team_ip: 192.168.10.100
+    team_prefix: 24
+    team_gateway: 192.168.10.1
+  tasks:
+    - name: Install teamd package
+      ansible.builtin.package:
+        name: teamd
+        state: present
+    - name: Configure team interface
+      community.general.nmcli:
+        conn_name: "{{ team_name }}"
+        ifname: "{{ team_name }}"
+        type: team
+        ip4: "{{ team_ip }}/{{ team_prefix }}"
+        gw4: "{{ team_gateway }}"
+        team:
+          runner:
+            name: "{{ team_mode }}"
+        state: up
+    - name: Add slave interfaces to team
+      community.general.nmcli:
+        conn_name: "{{ item }}"
+        ifname: "{{ item }}"
+        type: ethernet
+        master: "{{ team_name }}"
+        state: up
+      loop: "{{ team_ports }}"
+# ansible-playbook -i inventory.ini teamd-setup.yaml

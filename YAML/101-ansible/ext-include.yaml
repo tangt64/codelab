@@ -1,0 +1,18 @@
+# vi ext-include.yaml
+- name: this play2
+  debug:
+    msg: "play2"
+- name: this play3
+  debug:
+    sldkjslkjewoie: hehehe
+- hosts: localhost
+  tasks:
+    - name: this play1
+      debug:
+        msg: "play1"
+    - name: include
+      include_tasks: ext-include.yaml
+
+# ansible-playbook -i hosts includes.yaml --syntanx-check
+# ansible-inventory -i hosts --list
+# ansible-playbook --syntax-check includes.yaml

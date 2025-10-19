@@ -1,0 +1,38 @@
+global
+  log /dev/log local0
+  maxconn 20480
+  daemon
+
+defaults
+  log global
+  mode tcp
+  option tcplog
+  timeout connect {{ haproxy_timeout_connect }}
+  timeout client  {{ haproxy_timeout_client }}
+  timeout server  {{ haproxy_timeout_server }}
+
+# RW (single-writer) on 3306
+frontend mysql_rw
+  bind 0.0.0.0:3306
+  default_backend galera_rw
+
+backend galera_rw
+  balance first
+  option mysql-check user root post-41
+  default-server inter 2s fall 3 rise 2 maxconn 2000
+{% for h in groups['galera'] %}
+  server {{ h }} {{ hostvars[h].ansible_host }}:{{ mariadb_port }} check         agent-check agent-port {{ galera_agent_port_rw }}
+{% endfor %}
+
+# RO pool on 3307 (optional consumer use)
+frontend mysql_ro
+  bind 0.0.0.0:3307
+  default_backend galera_ro
+
+backend galera_ro
+  balance roundrobin
+  option mysql-check user root post-41
+  default-server inter 2s fall 3 rise 2 maxconn 2000
+{% for h in groups['galera'] %}
+  server {{ h }} {{ hostvars[h].ansible_host }}:{{ mariadb_port }} check         agent-check agent-port {{ galera_agent_port_ro }}
+{% endfor %}

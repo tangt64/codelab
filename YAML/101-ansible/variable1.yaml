@@ -1,0 +1,11 @@
+# vi variable1.yaml
+---
+- name: this is first vars
+  hosts: localhost
+  vars:
+    division: middleware
+  tasks:
+  - name: Hello world
+    command: echo "Hello world"
+  - debug:
+        msg: "{{ division }}"

@@ -1,0 +1,10 @@
+# vi with_dict.yaml
+- hosts: localhost
+  vars:
+    dictionary:
+      dict1:
+        name: keyname1
+        value: keyvalue1
+      dict2:
+        name: keyname2
+        value: keyvalue2

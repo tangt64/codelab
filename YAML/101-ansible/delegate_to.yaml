@@ -1,0 +1,10 @@
+# vi delegate_to.yaml
+- hosts: 
+     - node1
+     - node2
+  tasks:
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restart
+    delegate_to: node5.example.com

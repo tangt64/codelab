@@ -1,0 +1,10 @@
+# ansible all -m service -a "name=nginx state=restarted" -b
+
+# vi restart_nginx.yml
+- hosts: all
+  become: yes
+  tasks:
+    - name: nginx 재시작
+      ansible.builtin.service:
+        name: nginx
+        state: restarted

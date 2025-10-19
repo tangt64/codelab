@@ -1,0 +1,6 @@
+---
+collections:
+  - name: ansible.posix
+  - name: community.general
+  - name: openstack.cloud
+  - name: ansible.netcommon

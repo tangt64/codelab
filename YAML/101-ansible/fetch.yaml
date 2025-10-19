@@ -1,0 +1,9 @@
+# vi fetch.yaml
+- name: 원격 로그 파일 수집
+  hosts: all
+  tasks:
+    - name: messages 로그를 로컬로 가져오기
+      ansible.builtin.fetch:
+        src: /var/log/messages
+        dest: /tmp/logs/
+        flat: no

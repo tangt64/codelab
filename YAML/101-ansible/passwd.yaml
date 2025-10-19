@@ -1,0 +1,6 @@
+# passwd.yaml
+- name: ansible 계정 생성 및 암호 지정
+  ansible.builtin.user:
+    name: ansible
+    password: "{{ 'ansible123' | password_hash('sha512') }}"
+    state: present

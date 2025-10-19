@@ -1,0 +1,23 @@
+[mysqld]
+bind-address = 0.0.0.0
+port = {{ mariadb_port }}
+server_id = {{ hostvars[inventory_hostname].server_id }}
+binlog_format = ROW
+default_storage_engine = InnoDB
+innodb_autoinc_lock_mode = 2
+
+# Galera
+wsrep_on = ON
+wsrep_provider = /usr/lib64/galera/libgalera_smm.so
+wsrep_cluster_name = {{ galera_cluster_name }}
+wsrep_cluster_address = "gcomm://{{ galera_nodes | join(',') }}"
+wsrep_node_address = {{ hostvars[inventory_hostname].wsrep_node_address }}
+wsrep_node_name = {{ inventory_hostname }}
+
+# SST (mariabackup)
+wsrep_sst_method = mariabackup
+wsrep_sst_auth = {{ galera_sst_user }}:{{ galera_sst_password }}
+
+# Recommended defaults
+innodb_flush_log_at_trx_commit = 2
+sync_binlog = 0

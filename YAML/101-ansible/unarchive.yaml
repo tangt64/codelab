@@ -1,0 +1,6 @@
+# vi unarchive.yaml
+- name: 웹 애플리케이션 압축 해제
+  ansible.builtin.unarchive:
+    src: /tmp/webapp.tar.gz
+    dest: /var/www/html/
+    remote_src: yes

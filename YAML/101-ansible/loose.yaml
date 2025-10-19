@@ -1,0 +1,9 @@
+# vi loose.yaml
+- hosts: localhost
+  vars:
+    installedVersion: 1996.07.12
+    softwareVersion: 1996.07.12
+  tasks:
+  - debug:
+      msg: "{{ installedVersion is version(softwareVersion, '<=') }}"
+# ansible-playbook -i localhost, loose.yaml

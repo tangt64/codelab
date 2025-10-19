@@ -1,0 +1,6 @@
+# vi import-playbook2.yaml
+- name: playbook2
+  hosts: localhost
+  tasks:
+  - debug:
+      msg: "this is playbook2.yaml file"

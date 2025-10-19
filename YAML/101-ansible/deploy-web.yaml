@@ -1,0 +1,9 @@
+# vi deploy-web.yaml
+- name: include roles from role directory
+  include_role:
+    name: testRole
+    tasks_from: verify_httpd_srv
+- name: include roles from role directory
+- include_role: "{ name: role1, tasks_from: verify_httpd_srv }"
+- include_role: "{ name: role2 }"
+- include_role: "{ name: role3}"

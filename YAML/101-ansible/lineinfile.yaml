@@ -1,0 +1,7 @@
+# lineinfile.yaml
+- name: SSH Root 로그인 허용
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin'
+    line: 'PermitRootLogin yes'
+    backup: yes

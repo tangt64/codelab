@@ -1,0 +1,45 @@
+---
+- name: Install and configure web/ftp using group_vars
+  hosts: node1
+  become: true
+  vars:
+    web_root: /var/www/html
+
+  tasks:
+    - name: Install web and ftp packages
+      package:
+        name:
+          - "{{ httpd_package }}"
+          - "{{ ftp_package }}"
+        state: present
+
+    - name: Enable & start services
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - "{{ httpd_package }}"
+        - "{{ ftp_package }}"
+
+    - name: Create a simple index.html (uses inventory var 'nodename')
+      copy:
+        dest: "{{ web_root }}/index.html"
+        mode: "0644"
+        content: |
+          Hello from {{ nodename | default(inventory_hostname) }}
+          (served by {{ httpd_package }})
+
+    - name: Set FTP banner
+      lineinfile:
+        path: /etc/vsftpd/vsftpd.conf
+        regexp: '^ftpd_banner='
+        line: 'ftpd_banner=Welcome to {{ nodename | default(inventory_hostname) }} FTP'
+        create: false
+      notify: Restart FTP
+
+  handlers:
+    - name: Restart FTP
+      service:
+        name: "{{ ftp_package }}"
+        state: restarted

@@ -1,0 +1,25 @@
+- name: Drop galera cnf
+  template:
+    src: 99-galera.cnf.j2
+    dest: /etc/my.cnf.d/99-galera.cnf
+    mode: '0644'
+  notify: Restart MariaDB
+
+- name: Set root password (idempotent)
+  community.mysql.mysql_user:
+    name: root
+    host_all: true
+    password: "{{ mariadb_root_password }}"
+    check_implicit_admin: true
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    state: present
+
+- name: Create SST user
+  community.mysql.mysql_user:
+    name: "{{ galera_sst_user }}"
+    password: "{{ galera_sst_password }}"
+    host: "%"
+    priv: "*.*:RELOAD,LOCK TABLES,REPLICATION CLIENT,PROCESS"
+    state: present
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"

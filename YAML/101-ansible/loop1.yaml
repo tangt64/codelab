@@ -1,0 +1,11 @@
+# vi loop1.yaml
+- hosts: localhost
+  vars:
+    userlist:
+      - user1
+      - user2
+    groups: "wheel"
+  tasks:
+    - debug:
+        msg: "{{ item }}"
+      loop: "{{ userlist }}"

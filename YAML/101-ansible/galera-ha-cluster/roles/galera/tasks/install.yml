@@ -1,0 +1,16 @@
+- name: Install MariaDB Galera + tools
+  package:
+    name:
+      - MariaDB-server
+      - MariaDB-client
+      - galera-4
+      - socat
+      - python3-PyMySQL
+      - mariadb-backup
+    state: present
+
+- name: Enable and start mariadb
+  service:
+    name: mariadb
+    state: started
+    enabled: yes

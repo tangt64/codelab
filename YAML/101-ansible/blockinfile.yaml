@@ -1,0 +1,10 @@
+# vi blockinfile.yaml
+- name: Apache VirtualHost 블록 추가
+  ansible.builtin.blockinfile:
+    path: /etc/httpd/conf/httpd.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      <VirtualHost *:80>
+          ServerName example.com
+          DocumentRoot /var/www/html
+      </VirtualHost>

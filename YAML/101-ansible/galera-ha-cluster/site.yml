@@ -1,0 +1,9 @@
+- hosts: galera
+  become: yes
+  roles:
+    - role: galera
+
+- hosts: haproxy
+  become: yes
+  roles:
+    - role: haproxy

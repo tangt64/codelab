@@ -1,0 +1,15 @@
+mariadb_root_password: "ChangeMe-Root!"
+galera_cluster_name: "my-galera"
+galera_nodes: "{{ groups['galera'] | map('extract', hostvars, 'wsrep_node_address') | list }}"
+galera_sst_user: "sstuser"
+galera_sst_password: "ChangeMe-SST!"
+mariadb_port: 3306
+
+# Health-check agent ports
+galera_agent_port_ro: 9200   # SYNC (RO pool)
+galera_agent_port_rw: 9201   # Writer (single)
+
+# HAProxy timeouts
+haproxy_timeout_connect: "5s"
+haproxy_timeout_client: "60s"
+haproxy_timeout_server: "60s"

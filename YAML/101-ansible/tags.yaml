@@ -1,0 +1,17 @@
+# vi tags.yaml
+- hosts: localhost
+  tasks:
+    - name: tag1
+      debug:
+        msg: "tag1 is run"
+      tags: tag1
+    - name: tag2
+      debug:
+        msg: "tag2 is run"
+      tags: tag2
+# ansible-playbook -i localhost, --tags=tag1 tags.yaml
+# ansible-playbook -i localhost, --skip-tags=tag1 tags.yaml
+# ansible-playbook -i localhost, --start-at-task=tag1 --step 
+# ansible-playbook -vvv debug.yaml
+# ansible-playbook --syntax-check 
+# ansible-playbook -C

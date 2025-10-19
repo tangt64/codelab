@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+mode="$1"  # "ro" or "rw"
+MYSQL="mysql -N -s -uroot -p{{ mariadb_root_password }}"
+
+state=$($MYSQL -e "SHOW GLOBAL STATUS LIKE 'wsrep_local_state';" 2>/dev/null | awk '{print $2}')
+cluster=$($MYSQL -e "SHOW GLOBAL STATUS LIKE 'wsrep_cluster_status';" 2>/dev/null | awk '{print $2}')
+ro=$($MYSQL -e "SHOW GLOBAL VARIABLES LIKE 'read_only';" 2>/dev/null | awk '{print $2}')
+
+# wsrep_local_state: 4 = Synced
+if [[ "$state" != "4" || "$cluster" != "Primary" ]]; then
+  echo "down"; exit 1
+fi
+
+if [[ "$mode" == "ro" ]]; then
+  echo "up"; exit 0
+fi
+
+if [[ "$mode" == "rw" ]]; then
+  if [[ "{{ hostvars[inventory_hostname].primary_writer | default(false) }}" == "True" && "$ro" == "OFF" ]]; then
+    echo "up"; exit 0
+  else
+    echo "down"; exit 1
+  fi
+fi
+
+echo "down"; exit 1

@@ -1,0 +1,25 @@
+# vi whenos.yaml
+- name: shutdown system
+  shutdown: 
+    msg: "The {{ inventory_hostname }} is going to shutdown by Ansible"
+  when:
+    - ansible_facts['distribution'] == "CentOS"
+    - ansible_facts['distribution']['major_version'] == "8"
+# ansible-playbook -i localhost, whenos.yaml
+
+# vi whenos.yaml
+- hosts: localhost
+  tasks:
+  - debug:
+      msg: "Shutdown OS"
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+      - ansible_distribution_version == "8"
+      - ansible_distribution_release == "Stream"
+ - debug:
+      msg: "No Shutdown OS"
+    when:
+      - ansible_facts['distribution'] != "CentOS"
+      - ansible_distribution_version != "8"
+      - ansible_distribution_release != "Stream"
+# ansible-playbook -i localhost, whenos.yaml

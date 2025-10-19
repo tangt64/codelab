@@ -1,0 +1,62 @@
+# vi bridge.yaml
+---
+- name: Create virtual interface fake-eth0 and bridge fake-br0
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    dummy_if: "fake-eth0"
+    bridge_if: "fake-br0"
+    # bridge_ip: "192.168.200.10/24"
+  tasks:
+    - name: Ensure 'ip' command is available
+      ansible.builtin.command: "which ip"
+      register: ip_cmd
+      changed_when: false
+      failed_when: ip_cmd.rc != 0
+      tags: sanity
+    - name: Load dummy kernel module (if available)
+      ansible.builtin.command: "modprobe dummy"
+      changed_when: false
+      failed_when: false
+      tags: setup
+    - name: Check if dummy interface exists
+      ansible.builtin.shell: "ip link show {{ dummy_if }}"
+      register: check_dummy
+      changed_when: false
+      failed_when: false
+      tags: interface
+    - name: Create bridge {{ bridge_if }} (if missing)
+      ansible.builtin.command: "ip link add name {{ bridge_if }} type bridge"
+      when: check_bridge.rc != 0
+      register: create_bridge
+      tags: bridge
+    - name: Ensure dummy interface is down before enslaving
+      ansible.builtin.command: "ip link set {{ dummy_if }} down"
+      ignore_errors: true
+      changed_when: false
+      tags: interface
+    - name: Add {{ dummy_if }} to bridge {{ bridge_if }} (if not already member)
+      ansible.builtin.shell: |
+        # check if already enslaved
+        ip -o link show {{ dummy_if }} | awk -F': ' '{print $2}' | grep -q "{{ bridge_if }}" || (
+          ip link set {{ dummy_if }} master {{ bridge_if }}
+        )
+      args:
+        executable: /bin/bash
+      register: enslave_result
+      changed_when: "'master' in enslave_result.stdout or enslave_result.rc == 0 and enslave_result.stdout == ''"
+      failed_when: false
+      tags: bridge
+    - name: Bring up bridge interface {{ bridge_if }}
+      ansible.builtin.command: "ip link set {{ bridge_if }} up"
+      tags: bridge
+    - name: Bring up member interface {{ dummy_if }}
+      ansible.builtin.command: "ip link set {{ dummy_if }} up"
+      tags: interface
+    - name: (Optional) Assign IP to bridge (uncomment and set var above if needed)
+      ansible.builtin.command: "ip addr add {{ bridge_ip }} dev {{ bridge_if }}"
+      when: bridge_ip is defined
+      ignore_errors: true
+      tags: bridge
+# ansible-playbook -i localhost, -c local create-fake-bridge.yml

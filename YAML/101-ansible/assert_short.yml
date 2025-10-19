@@ -1,0 +1,22 @@
+# vi assert_short.yml
+- name: Ansible Assert 간단 예제
+  hosts: localhost
+  gather_facts: true # OS 확인을 위해 facts 수집
+  vars:
+    # 예시 변수
+    command_stdout: "result: foo success"
+    target_value: 50
+  tasks:
+    - name: 1. OS가 RedHat이 아닐 때만 실행
+      assert:
+        that:
+          - ansible_os_family != 'RedHat'
+        fail_msg: "RedHat 계열 OS에서는 실행 불가"
+    - name: 2. 명령어 결과 확인 및 숫자 범위 검증
+      assert:
+        that:
+          - "'foo' in command_stdout"
+          - target_value >= 0 and target_value <= 100
+        msg: "모든 조건 충족 (Value: {{ target_value }})"
+        fail_msg: "검증 실패: 결과에 'foo'가 없거나 범위(0-100)를 벗어남."
+# ansible-playbook -i localhost, assert_short.yml

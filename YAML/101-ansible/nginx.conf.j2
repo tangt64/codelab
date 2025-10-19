@@ -1,0 +1,6 @@
+# vi /templates/nginx.conf.j2
+server {
+    listen 80;
+    server_name {{ hostname }};
+    root /var/www/{{ web_dir }};
+}

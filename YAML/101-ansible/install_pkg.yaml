@@ -1,0 +1,10 @@
+# ansible web -m package -a "name=httpd state=present" -b
+
+# vi install_pkg.yaml
+- hosts: web
+  become: yes
+  tasks:
+    - name: httpd 설치
+      ansible.builtin.package:
+        name: httpd
+        state: present

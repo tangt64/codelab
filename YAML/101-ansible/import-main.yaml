@@ -1,0 +1,9 @@
+# vi import-main.yaml
+- name: plays all playbooks
+  hosts: localhost
+
+- import_playbook: import-playbook1.yaml
+- import_playbook: import-playbook2.yaml
+
+# ansible-playbook -i localhost, import-main.yaml
+# ansible-playbook --syntax-check import-main.yaml

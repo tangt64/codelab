@@ -1,0 +1,6 @@
+# adduser.yaml
+- name: 계정 및 홈 디렉터리 삭제
+  ansible.builtin.user:
+    name: tempuser
+    state: absent
+    remove: yes

@@ -1,0 +1,11 @@
+# vi systemd-networkd.yaml
+- hosts: localhost
+  vars:
+    name: eth0
+    address: 10.10.10.1
+    gateway: 10.10.10.254
+  tasks:
+  - name: create systemd-networkd
+    template:
+      src: systemd-networkd.jinja2
+      dest: /etc/systemd/network/eth0.network

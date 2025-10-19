@@ -1,0 +1,13 @@
+# vi register2.yaml
+- hosts: localhost
+  vars: 
+    result: true
+  tasks:
+  - name: register a variable
+    command: /bin/false
+    register: result
+    ignore_errors: true
+  - name: the result is going to failed
+    command: /bin/somedothing 
+    when: result is failed
+# ansible-playbook -i localhost, register2.yaml

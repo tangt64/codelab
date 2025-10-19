@@ -1,0 +1,16 @@
+---
+- name: Distribute SSH public key to all nodes
+  hosts: all
+  become: yes
+  vars:
+    # 공개키 파일 경로를 변수로 관리
+    ssh_public_key_path: "/root/.ssh/id_rsa.pub"
+
+  tasks:
+    - name: Ensure SSH public key is present for root
+      ansible.builtin.authorized_key:
+        user: root
+        state: present
+        key: "{{ lookup('file', ssh_public_key_path) }}"
+
+# ansible-playbook -i inventory.ini send_ssh_key.yaml --ask-pass

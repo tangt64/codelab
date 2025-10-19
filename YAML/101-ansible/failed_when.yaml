@@ -1,0 +1,11 @@
+# vi failed_when.yaml
+- name: 소프트웨어 설치 (경고 시 실패)
+  ansible.builtin.command: echo "INSTALL SUCCESSFUL" ; echo "WARNING: This version is old" >&2  # Exit Code 0이지만 stderr에 경고를 출력
+  register: install_status
+  failed_when: "'WARNING:' in install_status.stderr"
+
+- name: 2차 설치 진행
+  ansible.builtin.debug:
+    msg: "설치에 경고가 없었으므로 다음 단계를 진행합니다."
+  when: install_status is succeeded
+# ansible-playbook -i localhost, failed_when.yaml

@@ -1,0 +1,12 @@
+# vi variable3.yaml
+---
+- name: this is first list
+  hosts: localhost
+  vars:
+    region:
+      - northeast
+      - southeast
+      - midwest    
+  tasks:
+  - name: echo the the first element value
+    command: echo "{{ region[0] }}"

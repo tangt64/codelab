@@ -1,0 +1,9 @@
+# vi when.yaml
+- hosts: node1.example.com
+  vars:
+    httpd_conf_update: true
+  tasks:
+  - copy:
+      src: httpd.conf
+      dest: /etc/httpd/conf/httpd.conf
+    when: httpd_conf_update  
