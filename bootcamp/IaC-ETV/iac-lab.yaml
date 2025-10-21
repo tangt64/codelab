@@ -8,6 +8,7 @@ parameters:
     type: string
     description: Root password to set on the instance (via cloud-init).
     hidden: true
+    default: ansible
   network_name:
     type: string
     default: net-infra
@@ -18,7 +19,7 @@ parameters:
     description: Name of the flavor for the instances.
   image_name:
     type: string
-    default: official-rocky-9
+    default:  lab-rocky-9 
     description: Name of the image for the instances (Cloud-init enabled).
   security_group_name:
     type: string
