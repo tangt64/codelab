@@ -1,7 +1,8 @@
 heat_template_version: 2015-10-15
 description: |
-  Create 6 server instances connected to both the existing network (net-infra) and
-  a new private network (iac-private) with fixed IPs (192.168.100.10 to 192.168.100.15).
+  Create 8 server instances (6 workers + console + controller) connected to both the existing
+  network (net-infra) and a new private network (iac-private) with fixed IPs for iac-private.
+  All ports explicitly use a custom security group (no 'default' SG attached anywhere).
 
 parameters:
   root_password:
@@ -12,14 +13,14 @@ parameters:
   network_name:
     type: string
     default: net-infra
-    description: Name of the original network parameter (kept for compatibility).
+    description: Name of the existing (public) network to attach as the 2nd NIC.
   flavor_name:
     type: string
     default: t1.iac-small
     description: Name of the flavor for the instances.
   image_name:
     type: string
-    default:  lab-rocky-9 
+    default: lab-rocky-9
     description: Name of the image for the instances (Cloud-init enabled).
   security_group_name:
     type: string
@@ -28,7 +29,7 @@ parameters:
 
 resources:
 
-  # 1. Private Network 및 Subnet 구성
+  # 1) Private Network 및 Subnet
   iac_private_network:
     type: OS::Neutron::Net
     properties:
@@ -42,12 +43,12 @@ resources:
       network: { get_resource: iac_private_network }
       ip_version: 4
 
-  # 2. 보안 그룹 생성
+  # 2) 보안 그룹 (모든 TCP/UDP/ICMP 인바운드 + 전체 아웃바운드)
   custom_security_group:
     type: OS::Neutron::SecurityGroup
     properties:
       name: { get_param: security_group_name }
-      description: Security group allowing all UDP, TCP, and ICMP traffic.
+      description: Security group allowing all UDP, TCP, and ICMP ingress, and all egress.
       rules:
         - direction: ingress
           remote_ip_prefix: 0.0.0.0/0
@@ -60,196 +61,268 @@ resources:
           protocol: icmp
         - direction: egress
           remote_ip_prefix: 0.0.0.0/0
-          protocol: any
+          # protocol omitted -> allow all
 
-  # 3. Cloud-init 설정 정의
+  # 3) Cloud-init
   server_cloud_config:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
         ssh_pwauth: true
-        disable_root: false 
+        disable_root: false
         chpasswd:
           list:
             str_replace:
               template: "root:PASSWORD"
               params:
                 PASSWORD: { get_param: root_password }
-          expire: False
+          expire: false
 
-  # 4. 개별 Neutron Port 및 Nova Server 리소스 (총 6개)
-  
-  # Server 01 (IP: 192.168.100.10)
+  # ---------- Server 01 (IP: 192.168.100.10) ----------
   port_01:
     type: OS::Neutron::Port
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "port-01" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "port-01" ] ] }
       network: { get_resource: iac_private_network }
       security_groups: [ { get_resource: custom_security_group } ]
       fixed_ips:
         - subnet: { get_resource: iac_private_subnet }
           ip_address: 192.168.100.10
+
+  netinfra_port_01:
+    type: OS::Neutron::Port
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "netinfra-port-01" ] ] }
+      network: { get_param: network_name }
+      security_groups: [ { get_resource: custom_security_group } ]
+
   server_01:
     type: OS::Nova::Server
-    depends_on: port_01
+    depends_on: [port_01, netinfra_port_01]
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "server-01" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "server-01" ] ] }
       flavor: { get_param: flavor_name }
       image: { get_param: image_name }
-      networks: 
-        - port: { get_resource: port_01 } # iac-private (고정 IP)
-        - network: { get_param: network_name } # net-infra
+      networks:
+        - port: { get_resource: port_01 }
+        - port: { get_resource: netinfra_port_01 }
       user_data_format: RAW
       user_data: { get_resource: server_cloud_config }
 
-  # Server 02 (IP: 192.168.100.11)
+  # ---------- Server 02 (IP: 192.168.100.11) ----------
   port_02:
     type: OS::Neutron::Port
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "port-02" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "port-02" ] ] }
       network: { get_resource: iac_private_network }
       security_groups: [ { get_resource: custom_security_group } ]
       fixed_ips:
         - subnet: { get_resource: iac_private_subnet }
           ip_address: 192.168.100.11
+
+  netinfra_port_02:
+    type: OS::Neutron::Port
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "netinfra-port-02" ] ] }
+      network: { get_param: network_name }
+      security_groups: [ { get_resource: custom_security_group } ]
+
   server_02:
     type: OS::Nova::Server
-    depends_on: port_02
+    depends_on: [port_02, netinfra_port_02]
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "server-02" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "server-02" ] ] }
       flavor: { get_param: flavor_name }
       image: { get_param: image_name }
-      networks: 
-        - port: { get_resource: port_02 } # iac-private (고정 IP)
-        - network: { get_param: network_name } # net-infra
+      networks:
+        - port: { get_resource: port_02 }
+        - port: { get_resource: netinfra_port_02 }
       user_data_format: RAW
       user_data: { get_resource: server_cloud_config }
 
-  # Server 03 (IP: 192.168.100.12)
+  # ---------- Server 03 (IP: 192.168.100.12) ----------
   port_03:
     type: OS::Neutron::Port
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "port-03" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "port-03" ] ] }
       network: { get_resource: iac_private_network }
       security_groups: [ { get_resource: custom_security_group } ]
       fixed_ips:
         - subnet: { get_resource: iac_private_subnet }
           ip_address: 192.168.100.12
+
+  netinfra_port_03:
+    type: OS::Neutron::Port
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "netinfra-port-03" ] ] }
+      network: { get_param: network_name }
+      security_groups: [ { get_resource: custom_security_group } ]
+
   server_03:
     type: OS::Nova::Server
-    depends_on: port_03
+    depends_on: [port_03, netinfra_port_03]
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "server-03" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "server-03" ] ] }
       flavor: { get_param: flavor_name }
       image: { get_param: image_name }
-      networks: 
-        - port: { get_resource: port_03 } # iac-private (고정 IP)
-        - network: { get_param: network_name } # net-infra
+      networks:
+        - port: { get_resource: port_03 }
+        - port: { get_resource: netinfra_port_03 }
       user_data_format: RAW
       user_data: { get_resource: server_cloud_config }
 
-  # Server 04 (IP: 192.168.100.13)
+  # ---------- Server 04 (IP: 192.168.100.13) ----------
   port_04:
     type: OS::Neutron::Port
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "port-04" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "port-04" ] ] }
       network: { get_resource: iac_private_network }
       security_groups: [ { get_resource: custom_security_group } ]
       fixed_ips:
         - subnet: { get_resource: iac_private_subnet }
           ip_address: 192.168.100.13
+
+  netinfra_port_04:
+    type: OS::Neutron::Port
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "netinfra-port-04" ] ] }
+      network: { get_param: network_name }
+      security_groups: [ { get_resource: custom_security_group } ]
+
   server_04:
     type: OS::Nova::Server
-    depends_on: port_04
+    depends_on: [port_04, netinfra_port_04]
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "server-04" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "server-04" ] ] }
       flavor: { get_param: flavor_name }
       image: { get_param: image_name }
-      networks: 
-        - port: { get_resource: port_04 } # iac-private (고정 IP)
-        - network: { get_param: network_name } # net-infra
+      networks:
+        - port: { get_resource: port_04 }
+        - port: { get_resource: netinfra_port_04 }
       user_data_format: RAW
       user_data: { get_resource: server_cloud_config }
 
-  # Server 05 (IP: 192.168.100.14)
+  # ---------- Server 05 (IP: 192.168.100.14) ----------
   port_05:
     type: OS::Neutron::Port
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "port-05" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "port-05" ] ] }
       network: { get_resource: iac_private_network }
       security_groups: [ { get_resource: custom_security_group } ]
       fixed_ips:
         - subnet: { get_resource: iac_private_subnet }
           ip_address: 192.168.100.14
+
+  netinfra_port_05:
+    type: OS::Neutron::Port
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "netinfra-port-05" ] ] }
+      network: { get_param: network_name }
+      security_groups: [ { get_resource: custom_security_group } ]
+
   server_05:
     type: OS::Nova::Server
-    depends_on: port_05
+    depends_on: [port_05, netinfra_port_05]
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "server-05" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "server-05" ] ] }
       flavor: { get_param: flavor_name }
       image: { get_param: image_name }
-      networks: 
-        - port: { get_resource: port_05 } # iac-private (고정 IP)
-        - network: { get_param: network_name } # net-infra
+      networks:
+        - port: { get_resource: port_05 }
+        - port: { get_resource: netinfra_port_05 }
       user_data_format: RAW
       user_data: { get_resource: server_cloud_config }
 
-  # Server 06 (IP: 192.168.100.15)
+  # ---------- Server 06 (IP: 192.168.100.15) ----------
   port_06:
     type: OS::Neutron::Port
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "port-06" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "port-06" ] ] }
       network: { get_resource: iac_private_network }
       security_groups: [ { get_resource: custom_security_group } ]
       fixed_ips:
         - subnet: { get_resource: iac_private_subnet }
           ip_address: 192.168.100.15
+
+  netinfra_port_06:
+    type: OS::Neutron::Port
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "netinfra-port-06" ] ] }
+      network: { get_param: network_name }
+      security_groups: [ { get_resource: custom_security_group } ]
+
   server_06:
     type: OS::Nova::Server
-    depends_on: port_06
+    depends_on: [port_06, netinfra_port_06]
     properties:
-      name: 
-        list_join: 
-          - "-"
-          - [ { get_param: security_group_name }, "server-06" ]
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "server-06" ] ] }
       flavor: { get_param: flavor_name }
       image: { get_param: image_name }
-      networks: 
-        - port: { get_resource: port_06 } # iac-private (고정 IP)
-        - network: { get_param: network_name } # net-infra
+      networks:
+        - port: { get_resource: port_06 }
+        - port: { get_resource: netinfra_port_06 }
+      user_data_format: RAW
+      user_data: { get_resource: server_cloud_config }
+
+  # ---------- console (IP: 192.168.100.110) ----------
+  port_console:
+    type: OS::Neutron::Port
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "port-console" ] ] }
+      network: { get_resource: iac_private_network }
+      security_groups: [ { get_resource: custom_security_group } ]
+      fixed_ips:
+        - subnet: { get_resource: iac_private_subnet }
+          ip_address: 192.168.100.110
+
+  netinfra_port_console:
+    type: OS::Neutron::Port
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "netinfra-port-console" ] ] }
+      network: { get_param: network_name }
+      security_groups: [ { get_resource: custom_security_group } ]
+
+  server_console:
+    type: OS::Nova::Server
+    depends_on: [port_console, netinfra_port_console]
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "console" ] ] }
+      flavor: { get_param: flavor_name }
+      image: { get_param: image_name }
+      networks:
+        - port: { get_resource: port_console }
+        - port: { get_resource: netinfra_port_console }
+      user_data_format: RAW
+      user_data: { get_resource: server_cloud_config }
+
+  # ---------- controller (IP: 192.168.100.111) ----------
+  port_controller:
+    type: OS::Neutron::Port
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "port-controller" ] ] }
+      network: { get_resource: iac_private_network }
+      security_groups: [ { get_resource: custom_security_group } ]
+      fixed_ips:
+        - subnet: { get_resource: iac_private_subnet }
+          ip_address: 192.168.100.111
+
+  netinfra_port_controller:
+    type: OS::Neutron::Port
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "netinfra-port-controller" ] ] }
+      network: { get_param: network_name }
+      security_groups: [ { get_resource: custom_security_group } ]
+
+  server_controller:
+    type: OS::Nova::Server
+    depends_on: [port_controller, netinfra_port_controller]
+    properties:
+      name: { list_join: [ "-", [ { get_param: security_group_name }, "controller" ] ] }
+      flavor: { get_param: flavor_name }
+      image: { get_param: image_name }
+      networks:
+        - port: { get_resource: port_controller }
+        - port: { get_resource: netinfra_port_controller }
       user_data_format: RAW
       user_data: { get_resource: server_cloud_config }
 
@@ -257,12 +330,15 @@ outputs:
   security_group_name:
     description: The name of the created security group.
     value: { get_param: security_group_name }
+
   original_network_name:
     description: The name of the original network parameter (net-infra).
     value: { get_param: network_name }
+
   new_network_name:
     description: The name of the created private network.
     value: { get_attr: [iac_private_network, name] }
+
   instance_ips:
     description: Explicitly assigned IP addresses of the instances.
     value:
@@ -273,13 +349,18 @@ outputs:
             { get_attr: [port_03, fixed_ips, 0, ip_address] },
             { get_attr: [port_04, fixed_ips, 0, ip_address] },
             { get_attr: [port_05, fixed_ips, 0, ip_address] },
-            { get_attr: [port_06, fixed_ips, 0, ip_address] } ]
+            { get_attr: [port_06, fixed_ips, 0, ip_address] },
+            { get_attr: [port_console, fixed_ips, 0, ip_address] },
+            { get_attr: [port_controller, fixed_ips, 0, ip_address] } ]
+
   instance_names:
     description: Names of the created server instances.
-    value: 
+    value:
       - { get_attr: [server_01, name] }
       - { get_attr: [server_02, name] }
       - { get_attr: [server_03, name] }
       - { get_attr: [server_04, name] }
       - { get_attr: [server_05, name] }
       - { get_attr: [server_06, name] }
+      - { get_attr: [server_console, name] }
+      - { get_attr: [server_controller, name] }
