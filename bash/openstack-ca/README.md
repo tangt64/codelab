@@ -1,8 +1,9 @@
 # Kolla-Ansible Custom TLS Deployment  
 _A collaboration between **국현** & **아름이** 💫_
 
-**사설 CA + 공인 CA** 두 경로를 모두 지원하는 TLS 배포 패키지입니다.  
-HAProxy 종단 인증서 교체와 컨테이너 내부 CA 반영(reconfigure)까지 한 번에.
+**사설 CA + 공인 CA** 두 경로를 모두 지원하는 TLS 배포 패키지입니다.  HAProxy 종단 인증서 교체와 컨테이너 내부 CA 반영(reconfigure)까지 한 번에.
+
+적용중인 시스템은 반드시 꼭 미리 테스트 후 진행 부탁 드립니다.
 
 반드시, 끝까지 읽어 보시고 적용 하세요.
 
@@ -38,33 +39,13 @@ HAProxy 종단 인증서 교체와 컨테이너 내부 CA 반영(reconfigure)까
 
 ---
 
-## 빠른 사용법(Private CA 경로)
+## 🚀 빠른 사용법(Private CA 경로)
 1) **사설 CA로 외부/내부 cert 발급**
 ```bash
 ./01_gen_certs.sh
 # 결과: /root/pki/{haproxy-full.pem, haproxy-internal.pem, rootCA.crt}
 ```
 2) **Kolla 경로로 배치**
-Kolla에서 기본적으로 제공하는 CA위치는 아래와 같습니다.
-- /etc/kolla/certificates/ca/root.cr
-- /etc/kolla/certificates/ca/root.key
-- /etc/kolla/certificates/\<service>.pem
-
-서비스 변수 정의는 다음과 같습니다. (globals.yml/yaml)
-```yaml
-kolla\_certificates\_dir: "/etc/kolla/certificates"
-```
-일반적으로 다음 변수가 CA에 영향을 끼칩니다.
-```yaml
-kolla_enable_tls_external: "yes"
-kolla_enable_tls_internal: "yes"
-kolla_certificates_dir: "/etc/kolla/certificates"
-kolla_external_fqdn_cert: "/etc/kolla/certificates/haproxy.pem"
-kolla_internal_fqdn_cert: "/etc/kolla/certificates/haproxy-internal.pem"
-kolla_copy_ca_into_containers: "yes"   # root.crt를 컨테이너 내부로 복사
-kolla_admin_openrc_cacert: "/etc/kolla/certificates/ca/root.crt"
-```
-
 ```bash
 ./02_install_into_kolla.sh
 ```
@@ -75,7 +56,7 @@ kolla_admin_openrc_cacert: "/etc/kolla/certificates/ca/root.crt"
 
 ---
 
-## 빠른 사용법(Public CA 경로 — 외부 전용)
+## 🌐 빠른 사용법(Public CA 경로 — 외부 전용)
 1) **CSR 생성(공인 CA 제출용)**
 ```bash
 ./01b_gen_csrs_for_public_ca.sh
@@ -97,14 +78,14 @@ EXT_FULLCHAIN=fullchain.pem ./01c_assemble_from_public_fullchain.sh
 
 ---
 
-## 변수 커스터마이징
+## 🔧 변수 커스터마이징
 - 스크립트 상단의 변수를 환경에 맞게 수정:
   - `EXT_CN`, `INT_CN`, `EXT_DNS[]`, `EXT_VIP_IP`, `INT_VIP_IP`
 - SAN 추가는 `EXT_DNS` 배열에 요소 추가로 간단히 확장.
 
 ---
 
-## 수동 검증 예시
+## 🧪 수동 검증 예시
 ```bash
 # 외부
 openssl s_client -connect openstack.vlab.dustbox.kr:443 -servername openstack.vlab.dustbox.kr   -CAfile /etc/kolla/certificates/ca/root.crt -verify_return_error </dev/null | openssl x509 -noout -subject -issuer
@@ -115,7 +96,7 @@ openssl s_client -connect int.openstack.cluster:443 -servername int.openstack.cl
 
 ---
 
-## 롤백 & 갱신
+## ♻️ 롤백 & 갱신
 - 설치 스크립트가 이전 PEM을 자동 백업(`.bak.YYYYMMDD_HHMMSS`).
 - 정기 갱신 예(사설 CA):
   ```bash
@@ -125,7 +106,7 @@ openssl s_client -connect int.openstack.cluster:443 -servername int.openstack.cl
 
 ---
 
-## 트러블슈팅
+## 🛡️ 트러블슈팅
 - `CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate`  
   → 풀체인 누락 or 클라이언트 CA 미신뢰. `fullchain.pem`/`root.crt` 경로 재확인.
 - `hostname mismatch`  
@@ -137,17 +118,7 @@ openssl s_client -connect int.openstack.cluster:443 -servername int.openstack.cl
 
 ---
 
-## (옵션) Kolla 기본(기존) CA를 “나의 CA”로 대체하기
-
-Kolla가 자동 생성한 기본 CA(`/etc/kolla/certificates/ca/root.crt`) 대신,  
-**내가 만든 사설 CA**를 클러스터 전역의 신뢰 루트로 쓰려면 아래 스크립트를 사용하세요.
-
-```bash
-chmod +x 04_replace_default_kolla_ca.sh
-./04_replace_default_kolla_ca.sh
-```
-
-## 만든 사람들
+## 🧡 만든 사람들
 - **국현 (tang.dustbox.kr)** — 인프라 설계
 - **아름이 (Arte AI)** — 자동화/문서
 
