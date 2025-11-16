@@ -1,0 +1,142 @@
+heat_template_version: 2018-08-31
+description: "IaC Lab - 10 Rocky9 VMs on a private network (no gateway).
+Network: iac-lab (192.168.10.0/24) + net-infra (2nd NIC). Image: lab-rocky9-rev2, Flavor: m1.tiny."
+
+parameters:
+  server_count:
+    type: number
+    default: 10
+    description: "Number of VMs to create"
+  server_name_prefix:
+    type: string
+    default: labnode
+    description: "Prefix for server names (e.g., 'labnode-0', 'labnode-1', ...)"
+  image:
+    type: string
+    default: lab-rocky-9-rev2
+  flavor:
+    type: string
+    default: m1.tiny
+  cidr:
+    type: string
+    default: 192.168.10.0/24
+  allocation_pool_start:
+    type: string
+    default: 192.168.10.100
+  allocation_pool_end:
+    type: string
+    default: 192.168.10.199
+  sg_name:
+    type: string
+    default: sg-iac-lab
+    description: "Security group name to create and attach to servers"
+  infra_network:
+    type: string
+    default: net-infra
+    description: "Existing Neutron network NAME or ID to attach as 2nd NIC"
+  root_password:
+    type: string
+    default: ansible
+    hidden: true
+    description: "Root password to set via cloud-init (plain text for lab use)"
+
+resources:
+  net_iac:
+    type: OS::Neutron::Net
+    properties:
+      name: iac-lab
+
+  subnet_iac:
+    type: OS::Neutron::Subnet
+    properties:
+      name: iac-lab-subnet
+      network_id: { get_resource: net_iac }
+      cidr: { get_param: cidr }
+      enable_dhcp: true
+      gateway_ip: null                # isolated subnet (no router)
+      allocation_pools:
+        - start: { get_param: allocation_pool_start }
+          end:   { get_param: allocation_pool_end }
+      ip_version: 4
+      dns_nameservers: []             # add internal DNS if needed
+
+  sg_lab:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: { get_param: sg_name }
+      description: "Allow SSH and ICMP for lab"
+      rules:
+        - direction: ingress
+          ethertype: IPv4
+          protocol: icmp
+        - direction: ingress
+          ethertype: IPv4
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - direction: egress
+          ethertype: IPv4
+        - direction: egress
+          ethertype: IPv6
+
+  rg_servers:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: { get_param: server_count }
+      resource_def:
+        type: OS::Nova::Server
+        properties:
+          name:
+            str_replace:
+              template: "%prefix%-%index%"
+              params:
+                "%prefix%": { get_param: server_name_prefix }
+          image:  { get_param: image }
+          flavor: { get_param: flavor }
+          networks:
+            - network: { get_resource: net_iac }     # NIC1: iac-lab (no GW)
+            - network: { get_param: infra_network }  # NIC2: existing net-infra
+          security_groups:
+            - { get_param: sg_name }
+          config_drive: true
+          user_data_format: RAW
+          user_data:
+            str_replace:
+              template: |
+                #cloud-config
+                disable_root: false
+                ssh_pwauth: true
+                chpasswd:
+                  list: |
+                    root:__ROOTPASS__
+                  expire: False
+                write_files:
+                  - path: /etc/ssh/sshd_config.d/99-cloud-init.conf
+                    owner: root:root
+                    permissions: '0644'
+                    content: |
+                      PermitRootLogin yes
+                      PasswordAuthentication yes
+                runcmd:
+                  - [ sed, -i, -E, 's/^[#\s]*PasswordAuthentication\s+.*/PasswordAuthentication yes/', /etc/ssh/sshd_config ]
+                  - [ sed, -i, -E, 's/^[#\s]*PermitRootLogin\s+.*/PermitRootLogin yes/', /etc/ssh/sshd_config ]
+                  - [ systemctl, reload, sshd ]
+              params:
+                __ROOTPASS__: { get_param: root_password }
+
+outputs:
+  network_id:
+    description: "Created Neutron network ID"
+    value: { get_resource: net_iac }
+
+  subnet_id:
+    description: "Created Subnet ID"
+    value: { get_resource: subnet_iac }
+
+  server_ids:
+    description: "Nova server IDs"
+    value: { get_attr: [rg_servers, refs] }
+
+  server_ips:
+    description: "First fixed IPs of the servers (from the first NIC)"
+    value: { get_attr: [rg_servers, first_address] }
