@@ -1,0 +1,7 @@
+FROM tomcat:10.1-jre25-temurin
+
+MAINTAINER "YOUR NAME<YOUR EMAIL>"
+
+RUN rm -rf /usr/local/tomcat/webapps/
+
+ADD target/blog.war /usr/local/tomcat/webapps/ROOT.war

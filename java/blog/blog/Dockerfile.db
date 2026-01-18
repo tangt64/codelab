@@ -1,0 +1,9 @@
+FROM library/postgres:18.1
+
+MAINTAINER "YOUR NAME<YOUR EMAIL>"
+
+ENV POSTGRES_PASSWORD blog
+ENV POSTGRES_USER blog
+ENV POSTGRES_DB blog
+
+ADD docker/create_tables.sql /docker-entrypoint-initdb.d/
