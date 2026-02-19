@@ -67,6 +67,13 @@
             <version>${jackson.version}</version>
         </dependency>
 
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
         <!-- JDBC driver (packaged into WEB-INF/lib so Tomcat can load it) -->
         <dependency>
             <groupId>org.postgresql</groupId>

@@ -2,6 +2,8 @@ package com.shpota.blog.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.shpota.blog.model.BlogRepository;
 import com.shpota.blog.model.Post;
 import com.shpota.blog.model.jdbc.JdbcBlogRepository;
@@ -36,7 +38,9 @@ import java.util.List;
 public class ApiController extends HttpServlet {
     private static final Logger LOGGER = LogManager.getLogger(ApiController.class);
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private BlogRepository repository;
 
     public static class PostRequest {
