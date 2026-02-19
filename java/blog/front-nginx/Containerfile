@@ -4,7 +4,7 @@ WORKDIR /app
 # build context is repo root; react UI lives at ./blog/blog/react-ui
 COPY blog/blog/react-ui/package*.json ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
-COPY blog/blog/react-ui/ ./
+COPY blog/react-ui/ ./
 RUN npm run build
 
 # Nginx runtime
