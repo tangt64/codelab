@@ -1,52 +1,57 @@
-# Blog (front Pod: nginx+tomcat, db Pod: postgres)
+# Blog (Podman Pod: front+api+db)
+
+이 문서는 **모든 포트를 8080 기준으로 통일**하고(= API/Tomcat 8080),
+프론트(Nginx)는 80으로 서비스하며, 이미지 태그는 **전부 localhost**로 맞춘 실행 가이드입니다.
 
 ## 1) WAR 빌드
 ```bash
-cd blog
-mvn -q -DskipTests package
+cd blog/blog
+mvn -DskipTests package
 ```
 
 ## 2) 이미지 빌드 (Podman)
+> 아래 명령은 **레포 루트**(blog 디렉터리가 보이는 위치)에서 실행합니다.
 
 ```bash
-# Blog root directory에서 아래 명령어 실행
-# API(Tomcat)
-podman build -t localhost/blog-api-tomcat:latest -f api-tomcat/Containerfile blog
+# 레포 루트로 이동
+cd ..
 
-# Front(Nginx+React)
-podman build -t localhost/blog-front-nginx:latest -f front-nginx/Containerfile .
+# API (Tomcat)
+podman build -t localhost/blog-api:latest -f blog/api-tomcat/Containerfile .
+
+# Front (React build + Nginx)
+podman build -t localhost/blog-front:latest -f blog/front-nginx/Containerfile .
 ```
 
-## 3) 이미지 푸시
+## 3) Pod 기반 실행 (DB 포함)
 ```bash
-podman push localhost/blog-api-tomcat:latest
-podman push localhost/blog-front-nginx:latest
-```
-
-
-## 4) 포드만에서 POD 기반으로 실행
-
-```bash
+# DB 데이터 영속 볼륨
 podman volume create blog-db
-podman pod create --name blog-pod \
-  -p 80:80 \
-  -p 8080:8080
-podman run -d --name blog-db \
-  --pod blog-pod \
-  -e POSTGRES_DB=blog \
-  -e POSTGRES_USER=blog \
-  -e POSTGRES_PASSWORD=blogpass \
-  -v blog-db:/var/lib/postgresql/data \
-  docker.io/library/postgres:16-alpine
-podman run -d --name blog-api \
-  --pod blog-pod \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/blog \
-  -e SPRING_DATASOURCE_USERNAME=blog \
-  -e SPRING_DATASOURCE_PASSWORD=blogpass \
-  localhost/blog-api-tomcat
-podman run -d --name blog-front \
-  --pod blog-pod \
-  localhost/blog-front
 
-podman pod ls
+# Pod 생성 (외부는 80만 오픈)
+podman pod create --name blog-pod -p 80:80
+
+# DB (PostgreSQL)
+podman run -d --name blog-db --pod blog-pod   -e POSTGRES_DB=blog   -e POSTGRES_USER=blog   -e POSTGRES_PASSWORD=blogpass   -v blog-db:/var/lib/postgresql/data   docker.io/library/postgres:16-alpine
+
+# API (Tomcat 8080)
+podman run -d --name blog-api --pod blog-pod   -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/blog   -e SPRING_DATASOURCE_USERNAME=blog   -e SPRING_DATASOURCE_PASSWORD=blogpass   localhost/blog-api:latest
+
+# Front (Nginx 80, /api -> localhost:8080 프록시)
+podman run -d --name blog-front --pod blog-pod   localhost/blog-front:latest
 ```
+
+### 접속
+- UI: `http://<HOST>/`
+- API(직접확인): `http://<HOST>/api/posts`  (GET)
+
+## 4) Kubernetes로 옮길 준비: YAML 생성
+```bash
+podman generate kube blog-pod > blog-pod.yaml
+```
+
+> Kubernetes로 “정식 이사”할 때는 보통:
+> - DB: StatefulSet + PVC
+> - API/Front: Deployment
+> - Ingress/Service로 노출
+> 로 정리합니다.
