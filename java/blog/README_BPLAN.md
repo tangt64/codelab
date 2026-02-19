@@ -29,7 +29,7 @@ podman build -t localhost/blog-front:latest -f blog/front-nginx/Containerfile .
 podman volume create blog-db
 
 # Pod 생성 (외부는 80만 오픈)
-podman pod create --name blog-pod -p 80:80
+podman pod create --name blog-pod -p 8080:8080
 
 # DB (PostgreSQL)
 podman run -d --name blog-db --pod blog-pod   -e POSTGRES_DB=blog   -e POSTGRES_USER=blog   -e POSTGRES_PASSWORD=blogpass   -v blog-db:/var/lib/postgresql/data   docker.io/library/postgres:16-alpine
